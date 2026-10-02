@@ -58,6 +58,35 @@ function seededJobInfos(): JobInfo[] {
     }));
 }
 
+const DEMO_FLOW_TASKS: Array<Pick<JobInfo, "name" | "type" | "subject">> = [
+  { name: "读取源数据", type: "MYSQL_SQL", subject: "SELECT * FROM source_table" },
+  { name: "Flink 实时转换", type: "FLINK_SQL", subject: "SELECT * FROM source_stream" },
+  { name: "写入数仓", type: "HIVE_SQL", subject: "INSERT INTO target_table SELECT * FROM transformed_data" },
+];
+
+/** Ensure seeded workflows always have enough stable tasks to render a useful demo DAG. */
+export function ensureMockJobsForFlow(flowId: number): JobInfo[] {
+  const owned = [...seededJobInfos(), ...jobInfoStore.values()].filter((job) => job.flowId === flowId);
+  for (let index = owned.length; index < DEMO_FLOW_TASKS.length; index++) {
+    const template = DEMO_FLOW_TASKS[index];
+    const id = 1_000_000 + flowId * 10 + index;
+    const job: JobInfo = {
+      ...defaultJobInfo(id),
+      ...template,
+      id,
+      flowId,
+      config: defaultConfig(template.type) as JobInfo["config"],
+    };
+    jobInfoStore.set(id, job);
+    owned.push(job);
+  }
+  return owned.slice(0, DEMO_FLOW_TASKS.length);
+}
+
+function findMockJobInfo(id: number): JobInfo {
+  return jobInfoStore.get(id) ?? seededJobInfos().find((job) => job.id === id) ?? defaultJobInfo(id);
+}
+
 export const workflowHandlers: RequestHandler[] = [
   // Legacy backend page used by the Runnelo compatibility tree.
   http.get("/api/jobInfo/page", async ({ request }) => {
@@ -73,7 +102,7 @@ export const workflowHandlers: RequestHandler[] = [
   http.get("/api/jobInfo/list", async ({ request }) => {
     await delay(100);
     const flowId = Number(new URL(request.url).searchParams.get("flowId"));
-    return ok([...seededJobInfos(), ...jobInfoStore.values()].filter((job) => job.flowId === flowId));
+    return ok(ensureMockJobsForFlow(flowId));
   }),
 
   // GET /api/jobTree/roots — top-level groups only (no children)
@@ -163,17 +192,14 @@ export const workflowHandlers: RequestHandler[] = [
     await delay(150);
     const { id } = params as { id: string };
     const numericId = Number(id);
-    if (Number.isFinite(numericId) && jobInfoStore.has(numericId)) {
-      return ok(jobInfoStore.get(numericId));
-    }
     if (!Number.isFinite(numericId)) return fail(1001, "任务 ID 必须是数字");
-    return ok(defaultJobInfo(numericId));
+    return ok(findMockJobInfo(numericId));
   }),
 
   http.post("/api/jobInfo/getByIds", async ({ request }) => {
     await delay(100);
     const ids = (await request.json()) as number[];
-    return ok(ids.map((id) => jobInfoStore.get(id) ?? defaultJobInfo(id)));
+    return ok(ids.map(findMockJobInfo));
   }),
 
   // POST /api/jobInfo/create

@@ -31,12 +31,12 @@ export const TASK_ICON_REGISTRY: Record<string, TaskIconDef> = {
   SHELL: { color: "#2e9e4f", src: shellIcon },
   CONDITION: { color: "#d48806", src: joinIcon },
   DEPENDENT: { color: "#13a8a8", src: dependIcon },
-  SUB_FLOW: { color: "#7b4fe0", src: flowIcon },
-  workflow: { color: "#7b4fe0", src: flowIcon },
+  SUB_FLOW: { color: "var(--ant-color-primary)", src: flowIcon },
+  workflow: { color: "var(--ant-color-primary)", src: flowIcon },
   group: { color: "#8c8c8c", src: flowIcon },
 };
 
-const FALLBACK: TaskIconDef = { color: "#7b4fe0", src: flowIcon };
+const FALLBACK: TaskIconDef = { color: "var(--ant-color-primary)", src: flowIcon };
 
 /** Resolve a type key to its icon (exact, case-insensitive on the key). */
 export function getTaskIcon(type: string | undefined | null): TaskIconDef {

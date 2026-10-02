@@ -23,6 +23,7 @@ import {
 } from "@ant-design/icons";
 import UserAvatar from "@/components/UserAvatar";
 import LangSwitcher from "@/components/LangSwitcher";
+import ThemeSwitcher from "@/components/ThemeSwitcher";
 import WorkspaceSwitcher from "@/components/WorkspaceSwitcher";
 import { APP } from "@/config";
 import { PAGE_PADDING } from "@/constants/layout";
@@ -30,6 +31,8 @@ import { useAuthStore, useAuthPermissions } from "@/stores/authStore";
 import { hasPermission } from "@/utils/permission";
 import { getRoutePermission } from "@/router/routes";
 import { useWorkspaceStore } from "@/stores/workspaceStore";
+import { useThemeStore } from "@/stores/themeStore";
+import { APP_HEADER_HEIGHT, appLayoutTokens, appPalettes, type ThemePresetKey } from "@/theme";
 
 type TFunc = (key: string) => string;
 
@@ -96,50 +99,26 @@ function buildLayoutRoutes(t: TFunc): ProLayoutProps["route"] {
   };
 }
 
-const layoutToken: ProLayoutProps["token"] = {
-  header: {
-    colorBgHeader: "#F6F8FA",
-    colorTextMenu: "rgba(0,0,0,0.6)",
-    colorTextMenuSelected: "rgba(0,0,0,0.96)",
-    colorBgMenuItemSelected: "rgba(0,0,0,0.04)",
-    heightLayoutHeader: 42,
-  },
-  sider: {
-    colorMenuBackground: "#fff",
-    colorMenuItemDivider: "#F6F8FA",
-    colorTextMenu: "#595959",
-    colorTextMenuSelected: "rgba(42,122,251,1)",
-    colorBgMenuItemSelected: "rgba(230,243,254,1)",
-    paddingInlineLayoutMenu: 4,
-    paddingBlockLayoutMenu: 4,
-  },
-  pageContainer: {
-    paddingBlockPageContainerContent: 0,
-    paddingInlinePageContainerContent: 0,
-  },
-};
-
-function renderHeaderTitle(title: string) {
-  const brandGradient = "linear-gradient(135deg, var(--ant-color-primary-active), var(--ant-color-primary-hover))";
+function renderHeaderTitle(title: string, themePreset: ThemePresetKey) {
+  const palette = appPalettes[themePreset];
   return (
-    <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
+    <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
       <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
         <div
           style={{
-            width: 30,
-            height: 30,
-            background: brandGradient,
+            width: 26,
+            height: 26,
+            background: palette.brand,
             mask: "url(/logo.svg) no-repeat center / contain",
             WebkitMask: "url(/logo.svg) no-repeat center / contain",
           }}
         />
         <span
           style={{
-            fontSize: 24,
-            fontWeight: 600,
-            background: brandGradient,
-            WebkitBackgroundClip: "text",
-            WebkitTextFillColor: "transparent",
+            color: palette.ink,
+            fontSize: 20,
+            fontWeight: 650,
+            letterSpacing: -0.4,
           }}
         >
           {title}
@@ -168,6 +147,7 @@ export default function MainLayout() {
   const loadUserInfo = useAuthStore((s) => s.loadUserInfo);
   const effectivePermissions = useAuthPermissions();
   const currentWorkspaceId = useWorkspaceStore((state) => state.currentId);
+  const themePreset = useThemeStore((state) => state.preset);
 
   // A page refresh restores `token` from storage synchronously, but the
   // persisted `user` can be stale (server-side role change, or a workspace
@@ -194,17 +174,21 @@ export default function MainLayout() {
       <ProLayout
         key={i18n.language}
         title={title}
-        headerTitleRender={() => renderHeaderTitle(title)}
+        headerTitleRender={() => renderHeaderTitle(title, themePreset)}
         layout="mix"
         splitMenus
         fixedHeader
-        token={layoutToken}
+        token={appLayoutTokens[themePreset]}
         location={{ pathname: location.pathname }}
         route={filteredRoutes}
         menuItemRender={(item, dom) => (
           <a onClick={() => item.path && item.name !== "_jobs" && navigate(item.path)}>{dom}</a>
         )}
-        actionsRender={() => [<LangSwitcher key="lang" aria-hidden />, <UserAvatar key="avatar" />]}
+        actionsRender={() => [
+          <ThemeSwitcher key="theme" />,
+          <LangSwitcher key="lang" aria-hidden />,
+          <UserAvatar key="avatar" />,
+        ]}
         footerRender={
           isDashboard
             ? () => (
@@ -218,7 +202,7 @@ export default function MainLayout() {
         contentStyle={{
           display: "flex",
           flexDirection: "column" as const,
-          height: isDashboard ? "calc(100vh - 42px - 28px)" : "calc(100vh - 42px)",
+          height: isDashboard ? `calc(100vh - ${APP_HEADER_HEIGHT}px - 28px)` : `calc(100vh - ${APP_HEADER_HEIGHT}px)`,
           overflow: "hidden",
           padding: 0,
           margin: 0,

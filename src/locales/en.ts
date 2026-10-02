@@ -223,6 +223,8 @@ const en = {
     priorityHigh: "High",
     task: "Task {{n}}",
     taskList: "Task List",
+    emptyCanvasTitle: "This workflow has no graph yet",
+    emptyCanvasHint: "Drag a task from the left panel onto the canvas",
     noFormForType: "No form available for this task type",
   },
 

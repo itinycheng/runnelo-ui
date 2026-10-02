@@ -1,10 +1,11 @@
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
-import { Flex, message } from "antd";
-import { useNodesState, useEdgesState, type Connection, type Node, type ReactFlowInstance } from "@xyflow/react";
+import { Empty, Flex, message, Typography } from "antd";
+import { useNodesState, useEdgesState, type Connection, type ReactFlowInstance } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import { useTranslation } from "react-i18next";
 import { useJobStore } from "@/stores/jobStore";
+import { useThemeStore } from "@/stores/themeStore";
 import { FlowCanvas } from "@/components/FlowCanvas";
 import { appendStatusEdge } from "@/components/FlowCanvas/constants";
 import { type DAGEditorProps, getInitialEdges, getInitialNodes } from "./DAGEditor.constants";
@@ -19,16 +20,13 @@ import { BottomPanel, DAGToolbar } from "./DAGEditor.panels";
 import { NodeEditModal } from "./DAGEditor.modal";
 import { TaskSidebar } from "./DAGEditor.sidebar";
 
-function usedJobIdsOf(nodes: Node[]): Set<number> {
-  return new Set(nodes.map((node) => node.data.jobId).filter((id): id is number => typeof id === "number"));
-}
-
 // The editor coordinates several small hooks; splitting the JSX orchestration
 // would obscure their shared canvas state without reducing component complexity.
 // eslint-disable-next-line max-lines-per-function
 export default function DAGEditor({ embedded = false }: DAGEditorProps) {
   const { id: routeId } = useParams<{ id: string }>();
   const selectedNode = useJobStore((s) => s.selectedNode);
+  const themePreset = useThemeStore((s) => s.preset);
   const [messageApi, contextHolder] = message.useMessage();
   const { t } = useTranslation();
 
@@ -52,11 +50,27 @@ export default function DAGEditor({ embedded = false }: DAGEditorProps) {
     onOpenNodeEdit: editModal.openEditModal,
   });
   const bottom = useBottomPanel({ flowRef });
-  const dnd = useDragAndDrop({ reactFlowInstance, setNodes });
-  const usedJobIds = useMemo(() => usedJobIdsOf(nodes), [nodes]);
+  const dnd = useDragAndDrop({ reactFlowInstance, workflowId, setNodes });
 
   // Loads a persisted FlowGraph onto the canvas on mount + serializes/saves on demand.
-  const { handleSave } = useFlowPersistence({ workflowId, nodes, edges, setNodes, setEdges, messageApi, t });
+  const { handleSave, isLoading } = useFlowPersistence({
+    workflowId,
+    nodes,
+    edges,
+    setNodes,
+    setEdges,
+    messageApi,
+    t,
+  });
+  const hasNodes = nodes.length > 0;
+
+  // Node bounds become measurable shortly after async restoration (and after
+  // a theme changes typography). Fit once at that stable point.
+  useEffect(() => {
+    if (isLoading || !hasNodes || !reactFlowInstance) return;
+    const timer = window.setTimeout(() => void reactFlowInstance.fitView({ padding: 0.2, maxZoom: 1 }), 80);
+    return () => window.clearTimeout(timer);
+  }, [hasNodes, isLoading, reactFlowInstance, themePreset]);
 
   const onConnect = useCallback((params: Connection) => setEdges((eds) => appendStatusEdge(params, eds)), [setEdges]);
 
@@ -65,9 +79,10 @@ export default function DAGEditor({ embedded = false }: DAGEditorProps) {
       {contextHolder}
       {bottom.isResizing && <div style={{ position: "fixed", inset: 0, zIndex: 9999, cursor: "row-resize" }} />}
       <Flex style={{ flex: 1, minHeight: 0 }}>
-        {taskListOpen && <TaskSidebar workflowId={workflowId} usedJobIds={usedJobIds} />}
+        {taskListOpen && <TaskSidebar />}
         <Flex vertical style={{ flex: 1, minWidth: 0, minHeight: 0 }}>
           <FlowCanvas
+            key={`${workflowId}-${isLoading ? "loading" : "loaded"}`}
             flowRef={flowRef}
             nodes={nodes}
             edges={edges}
@@ -88,6 +103,19 @@ export default function DAGEditor({ embedded = false }: DAGEditorProps) {
                 taskListOpen={taskListOpen}
                 onToggleTaskList={() => setTaskListOpen((open) => !open)}
               />
+            }
+            emptyContent={
+              !isLoading && !hasNodes ? (
+                <Empty
+                  image={Empty.PRESENTED_IMAGE_SIMPLE}
+                  description={
+                    <Flex vertical gap={4}>
+                      <Typography.Text strong>{t("dag.emptyCanvasTitle")}</Typography.Text>
+                      <Typography.Text type="secondary">{t("dag.emptyCanvasHint")}</Typography.Text>
+                    </Flex>
+                  }
+                />
+              ) : undefined
             }
             contextMenu={ctx.contextMenu}
             nodeMenuItems={ctx.nodeMenuItems}

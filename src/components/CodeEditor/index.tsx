@@ -161,8 +161,8 @@ const CodeEditor = forwardRef<CodeEditorHandle, CodeEditorProps>(function CodeEd
     <div
       style={{
         position: "relative",
-        border: "1px solid #E1E4E8",
-        borderRadius: 0,
+        border: "1px solid var(--ant-color-border)",
+        borderRadius: "var(--ant-border-radius)",
         overflow: "hidden",
       }}
     >

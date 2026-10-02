@@ -13,10 +13,10 @@
   border-color: var(--ant-color-border-secondary) !important;
 }
 
-/* ProLayout — square the header menu items to match the app's flat design
-   (global borderRadius is 0); ProLayout otherwise forces its own 4px. */
+/* ProLayout applies its own radius; keep header navigation aligned with the
+   compact radius used by the rest of the application. */
 #pro-layout-wrapper .ant-pro-base-menu-horizontal-menu-item {
-  border-radius: 0 !important;
+  border-radius: var(--ant-border-radius-sm) !important;
 }
 
 /* Job page content tabs */
@@ -41,7 +41,7 @@
 }
 
 .job-tabs-wrapper.ant-tabs-card > .ant-tabs-nav .ant-tabs-tab-active {
-  border-top-color: #168eff !important;
+  border-top-color: var(--ant-color-primary) !important;
   border-bottom-color: transparent !important;
 }
 
@@ -115,5 +115,5 @@
 }
 .sider-resizer:hover,
 .sider-resizer:active {
-  background: #168eff;
+  background: var(--ant-color-primary);
 }

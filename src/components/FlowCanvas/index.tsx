@@ -27,6 +27,25 @@ import { StatusEdge, TaskNode } from "./nodes";
 const edgeTypes = { status: StatusEdge };
 const nodeTypes = { taskNode: TaskNode };
 
+function CanvasEmptyState({ children }: { children?: React.ReactNode }) {
+  if (!children) return null;
+  return (
+    <div
+      style={{
+        position: "absolute",
+        inset: 0,
+        zIndex: 3,
+        display: "flex",
+        alignItems: "center",
+        justifyContent: "center",
+        pointerEvents: "none",
+      }}
+    >
+      {children}
+    </div>
+  );
+}
+
 function CanvasContextMenu({
   contextMenu,
   nodeMenuItems,
@@ -62,6 +81,8 @@ export interface FlowCanvasProps {
   showBackground?: boolean;
   /** Rendered top-right inside a ReactFlow Panel (editing mode only), e.g. a save toolbar. */
   toolbar?: React.ReactNode;
+  /** Centered non-interactive guidance rendered when the owning surface has no graph data. */
+  emptyContent?: React.ReactNode;
   flowRef?: React.RefObject<HTMLDivElement | null>;
   onNodesChange?: OnNodesChange;
   onEdgesChange?: OnEdgesChange;
@@ -88,6 +109,7 @@ export function FlowCanvas({
   showControls = true,
   showBackground = true,
   toolbar,
+  emptyContent,
   flowRef,
   onNodesChange,
   onEdgesChange,
@@ -135,6 +157,7 @@ export function FlowCanvas({
         {showMiniMap && <MiniMap nodeStrokeWidth={3} />}
         {!readOnly && toolbar && <Panel position="top-right">{toolbar}</Panel>}
       </ReactFlow>
+      <CanvasEmptyState>{emptyContent}</CanvasEmptyState>
       {!readOnly && (
         <CanvasContextMenu
           contextMenu={contextMenu}

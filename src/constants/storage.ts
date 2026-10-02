@@ -12,6 +12,8 @@ export const STORAGE_KEYS = {
   workspaceId: "workspaceId",
   /** Active UI language (en | zh). */
   lang: "lang",
+  /** Temporary visual-theme preset used while selecting the final design direction. */
+  themePreset: "dtail.theme.preset",
   /** Recent query-console statements. */
   queryHistory: "dtail.query.history",
   /** Schema version of the persisted auth (token+user). Bump to invalidate stale sessions. */

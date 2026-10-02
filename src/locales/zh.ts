@@ -223,6 +223,8 @@ const zh = {
     priorityHigh: "高",
     task: "任务 {{n}}",
     taskList: "任务列表",
+    emptyCanvasTitle: "当前工作流还没有图",
+    emptyCanvasHint: "从左侧拖入任务以开始编排",
     noFormForType: "该任务类型暂无配置表单",
   },
 

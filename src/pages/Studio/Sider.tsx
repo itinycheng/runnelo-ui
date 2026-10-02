@@ -80,7 +80,7 @@ const iconStyle: React.CSSProperties = {
 
 const iconActiveStyle: React.CSSProperties = {
   ...iconStyle,
-  borderLeft: "2px solid #168eff",
+  borderLeft: "2px solid var(--ant-color-primary)",
   color: "var(--ant-color-text)",
 };
 
@@ -276,7 +276,7 @@ function TreeFilterBar({ onChange }: { onChange: (filter: FilterState) => void }
               fontSize: 14,
               padding: 4,
               borderRadius: 4,
-              color: active ? "#168eff" : "var(--ant-color-text-tertiary)",
+              color: active ? "var(--ant-color-primary)" : "var(--ant-color-text-tertiary)",
             }}
           />
         </Tooltip>

@@ -38,15 +38,20 @@ export function useFlowPersistence({
   t,
 }: UseFlowPersistenceOpts) {
   const saveFlowGraph = useJobStore((s) => s.saveFlowGraph);
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
     let alive = true;
-    void getFlowGraph(workflowId).then((graph) => {
-      if (!alive) return;
-      const restored = deserializeFlow(graph);
-      setNodes(restored.nodes);
-      setEdges(restored.edges);
-    });
+    void getFlowGraph(workflowId)
+      .then((graph) => {
+        if (!alive) return;
+        const restored = deserializeFlow(graph);
+        setNodes(restored.nodes);
+        setEdges(restored.edges);
+      })
+      .finally(() => {
+        if (alive) setIsLoading(false);
+      });
     return () => {
       alive = false;
     };
@@ -61,7 +66,7 @@ export function useFlowPersistence({
     }
   }, [saveFlowGraph, workflowId, nodes, edges, messageApi, t]);
 
-  return { handleSave };
+  return { handleSave, isLoading };
 }
 
 type ContextMenuState = { type: "node" | "edge"; id: string; x: number; y: number } | null;
@@ -283,10 +288,13 @@ export function useNodeEditModal({ nodes, setNodes, messageApi }: UseNodeEditMod
 
 interface UseDragAndDropOpts {
   reactFlowInstance: ReactFlowInstance | null;
+  workflowId: string;
   setNodes: Dispatch<SetStateAction<Node[]>>;
 }
 
-export function useDragAndDrop({ reactFlowInstance, setNodes }: UseDragAndDropOpts) {
+export function useDragAndDrop({ reactFlowInstance, workflowId, setNodes }: UseDragAndDropOpts) {
+  const [nodeCount, setNodeCount] = useState(4);
+
   const onDragOver = useCallback((event: React.DragEvent) => {
     event.preventDefault();
     event.dataTransfer.dropEffect = "move";
@@ -295,36 +303,26 @@ export function useDragAndDrop({ reactFlowInstance, setNodes }: UseDragAndDropOp
   const onDrop = useCallback(
     (event: React.DragEvent) => {
       event.preventDefault();
-      const jobId = Number(event.dataTransfer.getData("application/reactflow-job-id"));
       const taskType = event.dataTransfer.getData("application/reactflow-type");
       const taskLabel = event.dataTransfer.getData("application/reactflow-label");
-      const description = event.dataTransfer.getData("application/reactflow-description");
-      if (!Number.isInteger(jobId) || jobId <= 0 || !taskType || !taskLabel || !reactFlowInstance) return;
+      if (!taskType || !taskLabel || !reactFlowInstance) return;
       const position = reactFlowInstance.screenToFlowPosition({ x: event.clientX, y: event.clientY });
-      setNodes((current) => {
-        if (current.some((node) => node.data.jobId === jobId)) return current;
-        const nextVertexId =
-          current.reduce((max, node) => {
-            const value = Number(node.id);
-            return Number.isInteger(value) ? Math.max(max, value) : max;
-          }, 0) + 1;
-        const newNode: Node = {
-          id: String(nextVertexId),
-          type: "taskNode",
-          data: {
-            jobId,
-            label: taskLabel,
-            nodeType: "task",
-            taskType,
-            description,
-            priority: "medium",
-          },
-          position,
-        };
-        return [...current, newNode];
-      });
+      const newNode: Node = {
+        id: `${workflowId}-task${nodeCount + 1}`,
+        type: "taskNode",
+        data: {
+          label: `${taskLabel} ${nodeCount + 1}`,
+          nodeType: "task",
+          taskType,
+          description: "",
+          priority: "medium",
+        },
+        position,
+      };
+      setNodes((nds) => [...nds, newNode]);
+      setNodeCount((count) => count + 1);
     },
-    [reactFlowInstance, setNodes],
+    [reactFlowInstance, workflowId, nodeCount, setNodes],
   );
 
   return { onDragOver, onDrop };

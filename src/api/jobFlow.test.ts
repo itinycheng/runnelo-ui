@@ -3,6 +3,7 @@ import { setupServer } from "msw/node";
 import { jobFlowHandlers } from "@/mocks/handlers/jobFlow";
 import { workflowHandlers } from "@/mocks/handlers/job";
 import { createJobInfo, listJobsForFlow } from "./job";
+import { jobTreeStore } from "@/mocks/data/jobTree";
 import {
   createJobFlow,
   getJobFlow,
@@ -21,6 +22,18 @@ beforeAll(() => server.listen({ onUnhandledRequest: "error" }));
 afterAll(() => server.close());
 
 describe("jobFlow API + mock", () => {
+  it("seeds persisted-looking DAG data for mock tree workflows", async () => {
+    const workflow = [...jobTreeStore.values()].find((node) => node.kind === "workflow" && node.refId != null);
+    expect(workflow?.refId).toBeDefined();
+
+    const graph = await getFlowGraph(workflow!.refId!);
+    expect(graph.nodes).toHaveLength(3);
+    expect(graph.edges).toHaveLength(2);
+    await expect(listJobsForFlow(workflow!.refId!)).resolves.toEqual(
+      expect.arrayContaining(graph.nodes.map((node) => expect.objectContaining({ id: node.jobId }))),
+    );
+  });
+
   it("creates then gets a JobFlow", async () => {
     const id = await createJobFlow({ name: "f1", type: "JOB_FLOW", cronExpr: "0 0 * * *", config: { parallelism: 2 } });
     expect(typeof id).toBe("number");

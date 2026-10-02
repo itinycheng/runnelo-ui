@@ -1,7 +1,8 @@
 import { http as mswHttp, delay, type RequestHandler } from "msw";
 import { fail, ok } from "@/mocks/lib/response";
 import { jobTreeStore, recordPlacement } from "@/mocks/data/jobTree";
-import type { JobFlow } from "@/types/entities";
+import { ensureMockJobsForFlow } from "@/mocks/handlers/job";
+import type { JobFlow, JobFlowDag } from "@/types/entities";
 import { ipage, parsePageSize } from "@/mocks/lib/page";
 
 // In-memory store, mirrors the backend /jobFlow endpoints for mock-only dev.
@@ -13,11 +14,34 @@ function numId(idParam: string): number {
 }
 
 /** Get-or-synthesize a stored flow so subsequent updates/reopens see the same object. */
-function ensureFlow(id: number): JobFlow {
+function isSeededWorkflow(id: number): boolean {
+  return [...jobTreeStore.values()].some((node) => node.kind === "workflow" && node.refId === id);
+}
+
+function demoDag(flowId: number): JobFlowDag {
+  const jobs = ensureMockJobsForFlow(flowId);
+  return {
+    vertices: jobs.map((job, index) => ({ id: index + 1, jobId: job.id!, precondition: "ALL_MATCHED" })),
+    edges: jobs.slice(1).map((_, index) => ({
+      fromVId: index + 1,
+      toVId: index + 2,
+      expectStatus: "SUCCESS",
+    })),
+    nodeLayouts: Object.fromEntries(
+      jobs.map((_, index) => [index + 1, { id: String(index + 1), type: "taskNode", x: 120 + index * 240, y: 120 }]),
+    ),
+    edgeLayouts: Object.fromEntries(jobs.slice(1).map((_, index) => [index, { id: `edge-${index + 1}-${index + 2}` }])),
+  };
+}
+
+function ensureFlow(id: number, includeDemoGraph = false): JobFlow {
   let flow = store.get(id);
   if (!flow) {
     flow = defaultFlow(id);
     store.set(id, flow);
+  }
+  if (includeDemoGraph && flow.flow == null && isSeededWorkflow(id)) {
+    flow.flow = demoDag(id);
   }
   return flow;
 }
@@ -92,12 +116,12 @@ export const jobFlowHandlers: RequestHandler[] = [
   mswHttp.get("/api/jobFlow/get/:id", async ({ params }) => {
     await delay(150);
     const id = numId(params.id as string);
-    return Number.isFinite(id) ? ok(ensureFlow(id)) : fail(1001, "工作流 ID 必须是数字");
+    return Number.isFinite(id) ? ok(ensureFlow(id, true)) : fail(1001, "工作流 ID 必须是数字");
   }),
 
   mswHttp.get("/api/jobFlow/copy/:id", async ({ params }) => {
     await delay(200);
-    const src = ensureFlow(numId(params.id as string));
+    const src = ensureFlow(numId(params.id as string), true);
     const id = ++seq;
     store.set(id, { ...src, id, name: `${src.name}-copy` });
     return ok(id);
