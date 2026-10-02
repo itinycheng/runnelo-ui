@@ -78,10 +78,10 @@ async function main() {
   if (workspaceId) {
     for (const [path, validate] of checks) validate(await request(path), path);
   }
-  console.log(`Flink Platform backend smoke passed (${config.authType}).`);
+  console.log(`Runnelo backend smoke passed (${config.authType}).`);
 }
 
 main().catch((error) => {
-  console.error(`Flink Platform backend smoke failed: ${error instanceof Error ? error.message : String(error)}`);
+  console.error(`Runnelo backend smoke failed: ${error instanceof Error ? error.message : String(error)}`);
   process.exitCode = 1;
 });

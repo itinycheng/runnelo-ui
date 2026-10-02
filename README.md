@@ -1,6 +1,6 @@
-# DTail UI
+# Runnelo UI
 
-Task scheduling platform frontend built with React 19 + TypeScript + Vite.
+Runnelo scheduling platform frontend built with React 19 + TypeScript + Vite.
 
 ## Tech Stack
 

@@ -15,7 +15,13 @@ export default function ThemeSwitcher() {
         <Flex align="center" gap={8} style={{ minWidth: 180 }}>
           <span
             aria-hidden
-            style={{ width: 10, height: 10, borderRadius: 3, background: palette.brand, flexShrink: 0 }}
+            style={{
+              width: 10,
+              height: 10,
+              borderRadius: 3,
+              background: palette.brand,
+              flexShrink: 0,
+            }}
           />
           <Flex vertical style={{ flex: 1 }}>
             <Typography.Text>{palette.label}</Typography.Text>

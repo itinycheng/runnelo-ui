@@ -1,4 +1,4 @@
-# DTail UI Visual Refresh Plan
+# Runnelo UI Visual Refresh Plan
 
 Status: phase 1 theme foundation implemented; theme selection in review  
 Last updated: 2026-10-02

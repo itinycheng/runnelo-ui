@@ -5,8 +5,9 @@ import { LockOutlined, UserOutlined } from "@ant-design/icons";
 import { useTranslation } from "react-i18next";
 import { useAuthStore } from "@/stores/authStore";
 import { getLoginConfig } from "@/api/auth";
-import { APP } from "@/config";
 import { STORAGE_KEYS } from "@/constants/storage";
+import BrandLogo from "@/components/BrandLogo";
+import { useThemeStore } from "@/stores/themeStore";
 import { addReauthentication, readSsoCallback, safeReturnTo } from "./sso";
 
 interface LoginFormValues {
@@ -125,6 +126,7 @@ function useLoginBootstrap() {
 export default function Login() {
   const [form] = Form.useForm<LoginFormValues>();
   const { t } = useTranslation();
+  const themePreset = useThemeStore((state) => state.preset);
   const { loading, setLoading, configLoading, authType, ssoLoginUrl, login, navigate, returnTo } = useLoginBootstrap();
 
   const rememberReturnTo = () => {
@@ -149,9 +151,7 @@ export default function Login() {
   return (
     <Flex justify="center" align="center" style={{ minHeight: "100vh" }}>
       <Card style={{ width: 400 }}>
-        <Typography.Title level={3} style={{ textAlign: "center" }}>
-          {t("login.title", { appName: APP.name })}
-        </Typography.Title>
+        <BrandLogo preset={themePreset} height={38} className="login-brand-logo" />
         {configLoading ? (
           <Flex justify="center" style={{ padding: 24 }}>
             <Spin data-testid="login-config-loading" />

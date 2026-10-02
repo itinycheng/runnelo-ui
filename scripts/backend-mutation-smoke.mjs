@@ -107,7 +107,7 @@ async function main() {
       throw new Error("Saved Flink config did not retain its polymorphic type.");
     }
 
-    console.log(`Flink Platform mutation smoke passed (flow ${flowId}, task ${job.id}, config ${configId}).`);
+    console.log(`Runnelo mutation smoke passed (flow ${flowId}, task ${job.id}, config ${configId}).`);
   } finally {
     if (configId) await request(`/config/purge/${configId}`);
     if (flowId) {
@@ -118,6 +118,6 @@ async function main() {
 }
 
 main().catch((error) => {
-  console.error(`Flink Platform mutation smoke failed: ${error instanceof Error ? error.message : String(error)}`);
+  console.error(`Runnelo mutation smoke failed: ${error instanceof Error ? error.message : String(error)}`);
   process.exitCode = 1;
 });

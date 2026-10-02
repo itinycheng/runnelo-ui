@@ -7,6 +7,12 @@
   scrollbar-color: var(--ant-color-border) transparent;
 }
 
+.login-brand-logo {
+  display: flex !important;
+  justify-content: center;
+  margin: 0 auto 24px;
+}
+
 /* ProLayout — unify all layout split borders to the lighter secondary color */
 #pro-layout-wrapper .ant-pro-layout .ant-layout-header,
 #pro-layout-wrapper .ant-pro-layout .ant-layout-sider {

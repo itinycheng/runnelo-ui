@@ -18,7 +18,7 @@ export class AppErrorBoundary extends Component<Props, State> {
   }
 
   componentDidCatch(error: Error, info: ErrorInfo) {
-    console.error("[Flink Platform UI] uncaught render error", error, info);
+    console.error("[Runnelo UI] uncaught render error", error, info);
   }
 
   render() {

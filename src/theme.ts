@@ -42,8 +42,8 @@ const neutral = {
 export const appPalettes: Record<ThemePresetKey, AppPalette> = {
   coral: {
     ...neutral,
-    label: "Flink Coral",
-    description: "Graphite UI with a restrained Flink-derived coral signature",
+    label: "Runnelo Coral",
+    description: "Warm coral with a clear product signature",
     brand: "#E6526F",
     accent: "#C43F5B",
     accentHover: "#D64A67",

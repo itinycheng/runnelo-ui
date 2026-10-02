@@ -24,6 +24,7 @@ import {
 import UserAvatar from "@/components/UserAvatar";
 import LangSwitcher from "@/components/LangSwitcher";
 import ThemeSwitcher from "@/components/ThemeSwitcher";
+import BrandLogo from "@/components/BrandLogo";
 import WorkspaceSwitcher from "@/components/WorkspaceSwitcher";
 import { APP } from "@/config";
 import { PAGE_PADDING } from "@/constants/layout";
@@ -32,7 +33,7 @@ import { hasPermission } from "@/utils/permission";
 import { getRoutePermission } from "@/router/routes";
 import { useWorkspaceStore } from "@/stores/workspaceStore";
 import { useThemeStore } from "@/stores/themeStore";
-import { APP_HEADER_HEIGHT, appLayoutTokens, appPalettes, type ThemePresetKey } from "@/theme";
+import { APP_HEADER_HEIGHT, appLayoutTokens, type ThemePresetKey } from "@/theme";
 
 type TFunc = (key: string) => string;
 
@@ -99,31 +100,10 @@ function buildLayoutRoutes(t: TFunc): ProLayoutProps["route"] {
   };
 }
 
-function renderHeaderTitle(title: string, themePreset: ThemePresetKey) {
-  const palette = appPalettes[themePreset];
+function renderHeaderTitle(themePreset: ThemePresetKey) {
   return (
     <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-        <div
-          style={{
-            width: 26,
-            height: 26,
-            background: palette.brand,
-            mask: "url(/logo.svg) no-repeat center / contain",
-            WebkitMask: "url(/logo.svg) no-repeat center / contain",
-          }}
-        />
-        <span
-          style={{
-            color: palette.ink,
-            fontSize: 20,
-            fontWeight: 650,
-            letterSpacing: -0.4,
-          }}
-        >
-          {title}
-        </span>
-      </div>
+      <BrandLogo preset={themePreset} height={26} />
       {/* Workspace scopes everything below it — a "brand / workspace" breadcrumb reads it as context. */}
       <WorkspaceSwitcher breadcrumb />
       {/* Trailing slash closes the brand+workspace context cluster off from the nav menu. */}
@@ -174,7 +154,7 @@ export default function MainLayout() {
       <ProLayout
         key={i18n.language}
         title={title}
-        headerTitleRender={() => renderHeaderTitle(title, themePreset)}
+        headerTitleRender={() => renderHeaderTitle(themePreset)}
         layout="mix"
         splitMenus
         fixedHeader

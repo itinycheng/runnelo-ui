@@ -22,7 +22,7 @@ npx vitest run src/path/to/file.test.ts
 
 ## Architecture Overview
 
-**DTail** is a workflow/job management UI for Flink/Spark/SQL jobs. It uses React 19, Ant Design 6, React Router 7, and Zustand for client state.
+**Runnelo** is a workflow/job management UI for Flink/Spark/SQL jobs. It uses React 19, Ant Design 6, React Router 7, and Zustand for client state.
 
 ### Routing & Auth
 

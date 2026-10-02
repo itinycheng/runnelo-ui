@@ -1,9 +1,9 @@
 {
-  "name": "tail-ui",
-  "appTitle": "DTail",
+  "name": "runnelo-ui",
+  "appTitle": "Runnelo",
   "private": true,
   "version": "0.1.0",
-  "description": "DTail — workflow/job management UI, built with React 19 + TypeScript + Vite.",
+  "description": "Runnelo scheduling platform UI, built with React 19 + TypeScript + Vite.",
   "license": "MIT",
   "author": "chenglong.wang",
   "engines": {
