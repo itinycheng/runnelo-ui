@@ -3,6 +3,7 @@ import { SearchOutlined, ApartmentOutlined, WarningOutlined, DeleteOutlined, Fil
 import { Badge, Button, Divider, Flex, Input, Popover, Tag, Tooltip, Typography } from "antd";
 import React, { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
+import "./Sider.css";
 
 const JOB_TYPE_FILTERS = [
   { label: "Flink SQL", value: "FLINK_SQL" },
@@ -198,14 +199,14 @@ function FilterPopoverContent({
       </Typography.Text>
       <Flex wrap gap={4} style={{ marginTop: 6 }}>
         {items.map((item) => (
-          <Tag
+          <Tag.CheckableTag
             key={item.value}
-            color={selected.includes(item.value) ? "blue" : undefined}
-            onClick={() => onToggle(item.value)}
+            checked={selected.includes(item.value)}
+            onChange={() => onToggle(item.value)}
             style={{ cursor: "pointer", margin: 0 }}
           >
             {item.label}
-          </Tag>
+          </Tag.CheckableTag>
         ))}
       </Flex>
     </div>
@@ -269,13 +270,14 @@ function TreeFilterBar({ onChange }: { onChange: (filter: FilterState) => void }
           {t("sider.jobs")}
         </Typography.Text>
         <Tooltip title={t("sider.filter")} placement="left">
-          <SearchOutlined
+          <Button
+            type="text"
+            size="small"
+            icon={<SearchOutlined />}
+            aria-pressed={open}
             onClick={toggleOpen}
             style={{
-              cursor: "pointer",
-              fontSize: 14,
-              padding: 4,
-              borderRadius: 4,
+              width: 28,
               color: active ? "var(--ant-color-primary)" : "var(--ant-color-text-tertiary)",
             }}
           />
@@ -360,14 +362,14 @@ function SearchPanel() {
         />
         <Flex wrap gap={4}>
           {JOB_TYPE_FILTERS.map((item) => (
-            <Tag
+            <Tag.CheckableTag
               key={item.value}
-              color={typeFilter.includes(item.value) ? "blue" : undefined}
-              onClick={() => toggleTypeFilter(item.value)}
+              checked={typeFilter.includes(item.value)}
+              onChange={() => toggleTypeFilter(item.value)}
               style={{ cursor: "pointer", margin: 0 }}
             >
               {item.label}
-            </Tag>
+            </Tag.CheckableTag>
           ))}
         </Flex>
       </Flex>

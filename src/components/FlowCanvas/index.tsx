@@ -17,6 +17,7 @@ import {
 } from "@xyflow/react";
 import { compactMenuTheme } from "@/theme";
 import { StatusEdge, TaskNode } from "./nodes";
+import "./FlowCanvas.css";
 
 /**
  * Shared DAG canvas used by both the Studio editor and the read-only run graph.
@@ -150,7 +151,7 @@ export function FlowCanvas({
         {...editHandlers}
         fitView
         fitViewOptions={{ maxZoom: 1, minZoom: 0.5 }}
-        style={{ background: "#fff" }}
+        style={{ background: "var(--ant-color-bg-container)" }}
       >
         {showBackground && <Background gap={16} size={1} />}
         {showControls && <Controls showInteractive={!readOnly} />}

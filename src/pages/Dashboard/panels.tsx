@@ -1,5 +1,4 @@
-import type { CSSProperties } from "react";
-import { Empty, Flex, Spin, Tag, Typography } from "antd";
+import { Card, Empty, Flex, Spin, Tag, Typography } from "antd";
 import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip, Legend } from "recharts";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
@@ -12,13 +11,7 @@ import { formatDuration, FAILED_EXEC_STATUSES, RUNNING_EXEC_STATUSES } from "@/p
 import { useQuery } from "@tanstack/react-query";
 import { useWorkspaceStore } from "@/stores/workspaceStore";
 import { queryKeys } from "@/api/queryKeys";
-
-const cardStyle: CSSProperties = {
-  padding: 20,
-  background: "#fff",
-  height: "100%",
-  border: "1px solid var(--ant-color-border)",
-};
+import { STATUS_TOKEN_COLOR } from "@/utils/statusColor";
 
 function CardHeader({ title, onViewAll }: { title: string; onViewAll?: () => void }) {
   const { t } = useTranslation();
@@ -56,24 +49,26 @@ export function StatusDonut({ stats }: { stats: DashboardStats | null }) {
   const rate = total ? Math.round((success / total) * 100) : 0;
 
   const data: DonutSlice[] = [
-    { status: "SUCCESS", name: t("dashboard.success"), value: success, color: "#52c41a" },
-    { status: "FAILURE", name: t("dashboard.failed"), value: failed, color: "#ff4d4f" },
-    { status: "RUNNING", name: t("dashboard.running"), value: running, color: "#faad14" },
-    ...(other > 0 ? [{ status: "" as const, name: t("dashboard.other"), value: other, color: "#bfbfbf" }] : []),
+    { status: "SUCCESS", name: t("dashboard.success"), value: success, color: STATUS_TOKEN_COLOR.success },
+    { status: "FAILURE", name: t("dashboard.failed"), value: failed, color: STATUS_TOKEN_COLOR.error },
+    { status: "RUNNING", name: t("dashboard.running"), value: running, color: STATUS_TOKEN_COLOR.warning },
+    ...(other > 0
+      ? [{ status: "" as const, name: t("dashboard.other"), value: other, color: STATUS_TOKEN_COLOR.neutral }]
+      : []),
   ];
 
   return (
-    <div style={cardStyle}>
+    <Card style={{ height: "100%" }}>
       <CardHeader title={t("dashboard.statusBreakdown")} />
       <div style={{ position: "relative" }}>
-        <ResponsiveContainer width="100%" height={260}>
+        <ResponsiveContainer width="100%" height={240}>
           <PieChart>
             <Pie
               data={data}
               dataKey="value"
               nameKey="name"
-              innerRadius={72}
-              outerRadius={100}
+              innerRadius={64}
+              outerRadius={88}
               paddingAngle={2}
               onClick={(d: { payload?: DonutSlice }) =>
                 d.payload?.status && navigate(`/runs?status=${d.payload.status}`)
@@ -92,13 +87,13 @@ export function StatusDonut({ stats }: { stats: DashboardStats | null }) {
           align="center"
           style={{ position: "absolute", inset: 0, top: -24, justifyContent: "center", pointerEvents: "none" }}
         >
-          <Typography.Text style={{ fontSize: 32, fontWeight: 600, lineHeight: 1 }}>{rate}%</Typography.Text>
+          <Typography.Text style={{ fontSize: 30, fontWeight: 600, lineHeight: 1 }}>{rate}%</Typography.Text>
           <Typography.Text type="secondary" style={{ fontSize: 12 }}>
             {t("dashboard.successRate")}
           </Typography.Text>
         </Flex>
       </div>
-    </div>
+    </Card>
   );
 }
 
@@ -133,7 +128,7 @@ export function RunListCard({ status, title, emptyText }: RunListCardProps) {
   const items: FlowRun[] = data?.data ?? [];
 
   return (
-    <div style={cardStyle}>
+    <Card style={{ height: "100%" }}>
       <CardHeader title={title} onViewAll={() => navigate(`/runs?status=${status}`)} />
       {loading ? (
         <Flex justify="center" style={{ padding: 40 }}>
@@ -167,6 +162,6 @@ export function RunListCard({ status, title, emptyText }: RunListCardProps) {
           ))}
         </Flex>
       )}
-    </div>
+    </Card>
   );
 }

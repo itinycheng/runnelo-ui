@@ -1,6 +1,54 @@
 // Unified tag coloring for entity `status` and `type`/category fields across the app.
 // Use `statusColor` for values with good/bad semantics, `enumColor` for neutral categories.
 // Both return Ant Design Tag color tokens (or preset palette names).
+import type { ExecutionStatus } from "@/constants/enums";
+
+interface ExecutionStatusVisual {
+  tagColor: string;
+  color: string;
+}
+
+/** Exact execution-state palette. Keep this as the single source for run tags and graph nodes. */
+export const EXECUTION_STATUS_VISUALS: Record<ExecutionStatus, ExecutionStatusVisual> = {
+  SUBMITTED: { tagColor: "cyan", color: "#13C2C2" },
+  RUNNING: { tagColor: "blue", color: "#1677FF" },
+  SUCCESS: { tagColor: "green", color: "#52C41A" },
+  FAILURE: { tagColor: "red", color: "#FF4D4F" },
+  KILLED: { tagColor: "volcano", color: "#FA541C" },
+  ABNORMAL: { tagColor: "purple", color: "#722ED1" },
+  ERROR: { tagColor: "magenta", color: "#EB2F96" },
+  NOT_EXIST: { tagColor: "default", color: "var(--ant-color-text-tertiary)" },
+  CREATED: { tagColor: "geekblue", color: "#2F54EB" },
+  KILLING: { tagColor: "orange", color: "#FA8C16" },
+  EXPECTED_FAILURE: { tagColor: "lime", color: "#A0D911" },
+  WAITING: { tagColor: "gold", color: "#FAAD14" },
+};
+
+export function executionStatusTagColor(status: ExecutionStatus): string {
+  return EXECUTION_STATUS_VISUALS[status].tagColor;
+}
+
+export function executionStatusVisualColor(status: ExecutionStatus): string {
+  return EXECUTION_STATUS_VISUALS[status].color;
+}
+
+/** Semantic colors for non-Tag renderers (charts, graph strokes, icons and dots).
+ * CSS variables keep those third-party/custom visuals synchronized with ConfigProvider. */
+export const STATUS_TOKEN_COLOR = {
+  success: "var(--ant-color-success)",
+  error: "var(--ant-color-error)",
+  info: "var(--ant-color-info)",
+  warning: "var(--ant-color-warning)",
+  neutral: "var(--ant-color-text-quaternary)",
+} as const;
+
+export const STATUS_TOKEN_BG = {
+  success: "var(--ant-color-success-bg)",
+  error: "var(--ant-color-error-bg)",
+  info: "var(--ant-color-info-bg)",
+  warning: "var(--ant-color-warning-bg)",
+  neutral: "var(--ant-color-fill-quaternary)",
+} as const;
 
 /** Semantic status → Ant Design Tag color token. Keyed by meaning, case-insensitive. */
 const STATUS_COLOR: Record<string, string> = {
@@ -11,8 +59,8 @@ const STATUS_COLOR: Record<string, string> = {
   enabled: "green",
   ok: "green",
   // in progress
-  running: "processing",
-  scheduling: "processing",
+  running: "blue",
+  scheduling: "cyan",
   // waiting
   pending: "gold",
   waiting: "gold",

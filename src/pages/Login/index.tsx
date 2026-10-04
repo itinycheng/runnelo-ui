@@ -151,7 +151,11 @@ export default function Login() {
   return (
     <Flex justify="center" align="center" style={{ minHeight: "100vh" }}>
       <Card style={{ width: 400 }}>
-        <BrandLogo preset={themePreset} height={38} className="login-brand-logo" />
+        <BrandLogo
+          preset={themePreset}
+          height={38}
+          style={{ display: "flex", justifyContent: "center", margin: "0 auto 24px" }}
+        />
         {configLoading ? (
           <Flex justify="center" style={{ padding: 24 }}>
             <Spin data-testid="login-config-loading" />

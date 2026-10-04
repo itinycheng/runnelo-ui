@@ -36,9 +36,10 @@ export function DAGToolbar({ embedded, onSave, taskListOpen, onToggleTaskList }:
   return (
     <Flex
       style={{
-        background: "var(--ant-color-bg-container, #fff)",
+        background: "var(--ant-color-bg-elevated)",
         padding: "4px 6px",
-        boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+        boxShadow: "var(--ant-box-shadow-tertiary)",
+        borderRadius: "var(--ant-border-radius)",
       }}
     >
       {!embedded && (
@@ -164,7 +165,7 @@ export function BottomPanel({
           height: panelHeight,
           flexShrink: 0,
           overflow: "auto",
-          background: "var(--ant-color-bg-container, #fff)",
+          background: "var(--ant-color-bg-container)",
           borderTop: "1px solid var(--ant-color-border-secondary)",
         }}
       >

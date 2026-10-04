@@ -184,8 +184,8 @@ const CodeEditor = forwardRef<CodeEditorHandle, CodeEditorProps>(function CodeEd
             padding: "1px 0",
             fontSize: 13,
             lineHeight: "19px",
-            fontFamily: "Menlo, Monaco, 'Courier New', monospace",
-            color: "#8B949E",
+            fontFamily: "var(--ant-font-family-code)",
+            color: "var(--ant-color-text-quaternary)",
             pointerEvents: "none",
             whiteSpace: "pre",
           }}

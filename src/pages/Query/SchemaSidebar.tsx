@@ -104,7 +104,7 @@ export default function SchemaSidebar({ datasourceId, onInsert }: SchemaSidebarP
     <Layout.Sider
       width={240}
       theme="light"
-      style={{ borderRight: "1px solid var(--ant-color-border)" }}
+      style={{ borderRight: "1px solid var(--ant-color-split)" }}
       collapsible
       collapsed={collapsed}
       onCollapse={setCollapsed}

@@ -1,6 +1,6 @@
-import { useState, type CSSProperties, type ReactNode } from "react";
+import { useState, type ReactNode } from "react";
 
-import { Col, Empty, Flex, Row, Segmented, Statistic, Typography } from "antd";
+import { Card, Col, Empty, Flex, Row, Segmented, Statistic, Typography } from "antd";
 import { AppstoreOutlined, CheckCircleOutlined, CloseCircleOutlined, SyncOutlined } from "@ant-design/icons";
 import { ResponsiveContainer, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend } from "recharts";
 import { useTranslation } from "react-i18next";
@@ -10,53 +10,50 @@ import { StatusDonut, RunListCard } from "./panels";
 import { useQuery } from "@tanstack/react-query";
 import { useWorkspaceStore } from "@/stores/workspaceStore";
 import { queryKeys } from "@/api/queryKeys";
+import { STATUS_TOKEN_COLOR } from "@/utils/statusColor";
 
 const TREND_SERIES = [
-  { key: "success", color: "#52c41a" },
-  { key: "failed", color: "#ff4d4f" },
-  { key: "running", color: "#faad14" },
+  { key: "success", color: STATUS_TOKEN_COLOR.success },
+  { key: "failed", color: STATUS_TOKEN_COLOR.error },
+  { key: "running", color: STATUS_TOKEN_COLOR.warning },
 ] as const;
 
 type TimeRange = "7d" | "14d" | "30d";
 
-const STAT_GRADIENTS = {
-  total: "linear-gradient(135deg, #e6f4ff 0%, #bae0ff 100%)",
-  success: "linear-gradient(135deg, #f6ffed 0%, #d9f7be 100%)",
-  failed: "linear-gradient(135deg, #fff2f0 0%, #ffccc7 100%)",
-  running: "linear-gradient(135deg, #fff7e6 0%, #ffd591 100%)",
-};
-
-const cardStyle: CSSProperties = {
-  padding: 20,
-  background: "#fff",
-  height: "100%",
-  border: "1px solid var(--ant-color-border)",
-};
-
 interface StatCardProps {
   title: string;
+  scope: string;
   value: number | string;
-  gradient: string;
   icon: ReactNode;
   iconColor: string;
   onClick: () => void;
 }
 
-function StatCard({ title, value, gradient, icon, iconColor, onClick }: StatCardProps) {
+function StatCard({ title, scope, value, icon, iconColor, onClick }: StatCardProps) {
   return (
     <Col xs={24} sm={12} lg={6}>
-      <div
+      <Card
+        hoverable
         role="button"
         tabIndex={0}
         onClick={onClick}
         onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && onClick()}
-        style={{ ...cardStyle, background: gradient, position: "relative", cursor: "pointer" }}
+        style={{ height: "100%", cursor: "pointer" }}
+        styles={{ body: { position: "relative", height: "100%" } }}
       >
-        <Statistic title={title} value={value} />
-        <span style={{ position: "absolute", top: 18, right: 20, fontSize: 26, color: iconColor, opacity: 0.85 }}>
-          {icon}
-        </span>
-      </div>
+        <Statistic
+          title={
+            <Flex align="baseline" gap={8}>
+              <span>{title}</span>
+              <Typography.Text type="secondary" style={{ fontSize: 12 }}>
+                {scope}
+              </Typography.Text>
+            </Flex>
+          }
+          value={value}
+        />
+        <span style={{ position: "absolute", top: 16, right: 16, fontSize: 24, color: iconColor }}>{icon}</span>
+      </Card>
     </Col>
   );
 }
@@ -69,11 +66,11 @@ function TrendChart({ trend }: { trend: TrendDataPoint[] }) {
     void navigate(`/runs?status=${status}`);
   };
   return trend.length === 0 ? (
-    <Flex align="center" justify="center" style={{ height: 300 }}>
-      <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} />
+    <Flex align="center" justify="center" style={{ height: 240 }}>
+      <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={t("dashboard.trendUnavailable")} />
     </Flex>
   ) : (
-    <ResponsiveContainer width="100%" height={300}>
+    <ResponsiveContainer width="100%" height={240}>
       <LineChart data={trend} margin={{ top: 8, right: 12, bottom: 0, left: -16 }}>
         <CartesianGrid strokeDasharray="3 3" stroke="var(--ant-color-border-secondary)" vertical={false} />
         <XAxis dataKey="date" tick={{ fontSize: 12 }} stroke="var(--ant-color-text-tertiary)" />
@@ -115,7 +112,7 @@ function TaskTrendCard({ trend, timeRange, onTimeRangeChange }: TaskTrendCardPro
 
   return (
     <Col xs={24} lg={16}>
-      <div style={cardStyle}>
+      <Card style={{ height: "100%" }}>
         <Flex justify="space-between" align="center" style={{ marginBottom: 16 }}>
           <Typography.Text strong style={{ fontSize: 15 }}>
             {t("dashboard.taskTrend")}
@@ -128,7 +125,7 @@ function TaskTrendCard({ trend, timeRange, onTimeRangeChange }: TaskTrendCardPro
           />
         </Flex>
         <TrendChart trend={trend} />
-      </div>
+      </Card>
     </Col>
   );
 }
@@ -154,46 +151,37 @@ export default function Dashboard() {
 
   return (
     <div>
-      {/* One block title + inline scope, so the four cards read as "last 24h runs". */}
-      <Flex align="baseline" gap={8} style={{ marginBottom: 12 }}>
-        <Typography.Text strong style={{ fontSize: 15 }}>
-          {t("dashboard.overview")}
-        </Typography.Text>
-        <Typography.Text type="secondary" style={{ fontSize: 13 }}>
-          {t("dashboard.last24h")}
-        </Typography.Text>
-      </Flex>
       <Row gutter={[16, 16]} style={{ marginBottom: 16 }}>
         <StatCard
-          title={t("dashboard.totalTasks")}
+          title={t("dashboard.totalRuns")}
+          scope={t("dashboard.last24h")}
           value={stats?.totalTasks ?? "-"}
-          gradient={STAT_GRADIENTS.total}
           icon={<AppstoreOutlined />}
-          iconColor="#1677ff"
+          iconColor="var(--ant-color-primary)"
           onClick={toRuns()}
         />
         <StatCard
           title={t("dashboard.successTasks")}
+          scope={t("dashboard.last24h")}
           value={stats?.successTasks ?? "-"}
-          gradient={STAT_GRADIENTS.success}
           icon={<CheckCircleOutlined />}
-          iconColor="#52c41a"
+          iconColor={STATUS_TOKEN_COLOR.success}
           onClick={toRuns("SUCCESS")}
         />
         <StatCard
           title={t("dashboard.failedTasks")}
+          scope={t("dashboard.last24h")}
           value={stats?.failedTasks ?? "-"}
-          gradient={STAT_GRADIENTS.failed}
           icon={<CloseCircleOutlined />}
-          iconColor="#ff4d4f"
+          iconColor={STATUS_TOKEN_COLOR.error}
           onClick={toRuns("FAILURE")}
         />
         <StatCard
           title={t("dashboard.runningTasks")}
+          scope={t("dashboard.now")}
           value={stats?.runningTasks ?? "-"}
-          gradient={STAT_GRADIENTS.running}
           icon={<SyncOutlined />}
-          iconColor="#faad14"
+          iconColor={STATUS_TOKEN_COLOR.warning}
           onClick={toRuns("RUNNING")}
         />
       </Row>

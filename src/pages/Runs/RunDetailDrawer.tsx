@@ -28,7 +28,7 @@ const preStyle: React.CSSProperties = {
   wordBreak: "break-all",
   background: "var(--ant-color-fill-quaternary)",
   padding: 12,
-  borderRadius: 6,
+  borderRadius: "var(--ant-border-radius)",
   fontSize: 12,
   margin: 0,
   maxHeight: 360,

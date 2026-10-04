@@ -5,6 +5,7 @@ interface BrandLogoProps {
   preset: ThemePresetKey;
   height?: number;
   className?: string;
+  style?: CSSProperties;
 }
 
 function colorMask(path: string, color: string): CSSProperties {
@@ -17,7 +18,7 @@ function colorMask(path: string, color: string): CSSProperties {
   };
 }
 
-export default function BrandLogo({ preset, height = 28, className }: BrandLogoProps) {
+export default function BrandLogo({ preset, height = 28, className, style }: BrandLogoProps) {
   const palette = appPalettes[preset];
   const wordmarkWidth = Math.round(height * 3.75);
 
@@ -26,7 +27,7 @@ export default function BrandLogo({ preset, height = 28, className }: BrandLogoP
       className={className}
       role="img"
       aria-label="Runnelo"
-      style={{ display: "inline-flex", alignItems: "center" }}
+      style={{ display: "inline-flex", alignItems: "center", ...style }}
     >
       <span
         aria-hidden

@@ -18,6 +18,7 @@ import { useDefinitionLifecycle } from "./useDefinitionLifecycle";
 import { TagEditModal } from "./TagEditModal";
 import { GroupEditModal } from "./GroupEditModal";
 import { WorkflowCreateModal } from "./WorkflowCreateModal";
+import "./JobTree.css";
 
 // ---------- constants & icons ----------
 

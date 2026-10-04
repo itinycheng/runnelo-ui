@@ -1,5 +1,6 @@
 import { MarkerType, type Node, type Edge } from "@xyflow/react";
 import type { FlowGraph, FlowNode, FlowEdge } from "@/types/flow";
+import { STATUS_TOKEN_COLOR } from "@/utils/statusColor";
 
 /**
  * Serialize the new-UI XYFlow canvas into a {@link FlowGraph} for
@@ -59,7 +60,7 @@ export function deserializeFlow(graph: FlowGraph): { nodes: Node[]; edges: Edge[
     },
   }));
 
-  const markerEnd = { type: MarkerType.ArrowClosed, color: "var(--ant-color-text-quaternary, #999)" };
+  const markerEnd = { type: MarkerType.ArrowClosed, color: STATUS_TOKEN_COLOR.neutral };
   const edges: Edge[] = graph.edges.map((e) => ({
     id: e.id,
     type: "status",

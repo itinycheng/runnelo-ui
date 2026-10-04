@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Drawer, Flex } from "antd";
+import { Button, Drawer, Flex } from "antd";
 import { useTranslation } from "react-i18next";
 import type { JobTreeNode } from "@/types/job";
 import DAGEditor from "@/pages/Studio/DAGEditor";
@@ -31,26 +31,29 @@ interface PanelBarItemProps {
 
 function PanelBarItem({ label, isActive, onClick }: PanelBarItemProps) {
   return (
-    <div
+    <Button
+      type="text"
+      aria-pressed={isActive}
       onClick={onClick}
       style={{
         writingMode: "vertical-rl",
         textOrientation: "mixed",
+        width: BAR_WIDTH,
+        height: "auto",
         padding: "8px 4px",
-        cursor: "pointer",
         fontSize: 12,
         letterSpacing: 1,
         whiteSpace: "nowrap",
-        borderRadius: 3,
+        borderRadius: "var(--ant-border-radius-sm)",
         background: isActive ? "var(--ant-color-primary-bg)" : "transparent",
         color: isActive ? "var(--ant-color-primary)" : "var(--ant-color-text-tertiary)",
         fontWeight: isActive ? 500 : 400,
-        transition: "all 0.15s",
+        transition: "color var(--ant-motion-duration-fast), background var(--ant-motion-duration-fast)",
         userSelect: "none",
       }}
     >
       {label}
-    </div>
+    </Button>
   );
 }
 

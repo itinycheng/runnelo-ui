@@ -1,0 +1,24 @@
+.job-tabs-wrapper {
+  display: flex;
+  flex-direction: column;
+}
+
+.job-tabs-wrapper .ant-tabs-content-holder {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+}
+
+.job-tabs-wrapper.ant-tabs-card > .ant-tabs-nav .ant-tabs-tab {
+  border-top: 2px solid transparent !important;
+  transition: none !important;
+}
+
+.job-tabs-wrapper.ant-tabs-card > .ant-tabs-nav .ant-tabs-tab:first-child {
+  border-left: none !important;
+}
+
+.job-tabs-wrapper.ant-tabs-card > .ant-tabs-nav .ant-tabs-tab-active {
+  border-top-color: var(--ant-color-primary) !important;
+  border-bottom-color: transparent !important;
+}

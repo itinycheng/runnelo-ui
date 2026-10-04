@@ -6,17 +6,16 @@ import SiderPanel from "@/pages/Studio/Sider";
 import JobTabWrapper from "@/pages/Studio/JobTabWrapper";
 import { TaskIcon } from "@/components/TaskIcon";
 import React from "react";
+import "./StudioTabs.css";
 
 const tabTheme: ThemeConfig = {
   components: {
     Tabs: {
       horizontalMargin: "0",
-      titleFontSize: 13,
       cardBg: "var(--ant-color-bg-layout)",
       cardHeight: 35,
       cardPadding: "4px 12px",
       cardGutter: -1,
-      itemColor: "var(--ant-color-text-secondary)",
     },
   },
 };

@@ -10,15 +10,22 @@ import {
 } from "@xyflow/react";
 import { EDGE_STATUS_COLORS, EDGE_STATUS_LABELS, handleStyle, type EdgeStatus } from "./constants";
 import { TaskIcon } from "@/components/TaskIcon";
+import { EXECUTION_STATUS_VISUALS, STATUS_TOKEN_COLOR } from "@/utils/statusColor";
+import type { ExecutionStatus } from "@/constants/enums";
 
 /** Border/dot color when a node carries a run status (used by the read-only run graph). */
 const RUN_STATUS_COLOR: Record<string, string> = {
-  success: "#52c41a",
-  failed: "#ff4d4f",
-  running: "#1677ff",
-  killed: "#faad14",
-  waiting: "#bfbfbf",
+  success: STATUS_TOKEN_COLOR.success,
+  failed: STATUS_TOKEN_COLOR.error,
+  running: STATUS_TOKEN_COLOR.info,
+  killed: STATUS_TOKEN_COLOR.warning,
+  waiting: STATUS_TOKEN_COLOR.neutral,
 };
+
+function resolveRunStatusColor(status: string | undefined): string | undefined {
+  if (!status) return undefined;
+  return EXECUTION_STATUS_VISUALS[status as ExecutionStatus]?.color ?? RUN_STATUS_COLOR[status];
+}
 
 export function StatusEdge(props: EdgeProps) {
   const { sourceX, sourceY, targetX, targetY, sourcePosition, targetPosition, style, markerEnd, data } = props;
@@ -65,13 +72,13 @@ export function TaskNode({ data, selected }: NodeProps) {
   const priority = data.priority as string | undefined;
   const taskType = data.taskType as string | undefined;
   const runStatus = data.status as string | undefined;
-  const statusColor = runStatus ? RUN_STATUS_COLOR[runStatus] : undefined;
+  const statusColor = resolveRunStatusColor(runStatus);
 
   const border = selected
     ? "2px solid var(--ant-color-primary)"
     : statusColor
       ? `2px solid ${statusColor}`
-      : "1px solid var(--ant-color-border, #ddd)";
+      : "1px solid var(--ant-color-border)";
 
   return (
     <div
@@ -80,7 +87,8 @@ export function TaskNode({ data, selected }: NodeProps) {
       style={{
         padding: "4px 6px",
         border,
-        background: "var(--ant-color-bg-container, #fff)",
+        background: "var(--ant-color-bg-container)",
+        borderRadius: "var(--ant-border-radius-sm)",
         minWidth: 60,
         textAlign: "center",
         fontSize: 11,
@@ -102,7 +110,7 @@ export function TaskNode({ data, selected }: NodeProps) {
             height: 9,
             borderRadius: "50%",
             background: statusColor,
-            border: "1.5px solid #fff",
+            border: "1.5px solid var(--ant-color-bg-container)",
           }}
         />
       )}
@@ -119,8 +127,9 @@ export function TaskNode({ data, selected }: NodeProps) {
             top: "100%",
             transform: "translateX(-50%)",
             marginTop: 6,
-            background: "rgba(0,0,0,0.75)",
-            color: "#fff",
+            background: "var(--ant-color-bg-spotlight)",
+            color: "var(--ant-color-text-light-solid)",
+            borderRadius: "var(--ant-border-radius-sm)",
             padding: "4px 8px",
             fontSize: 10,
             lineHeight: "14px",

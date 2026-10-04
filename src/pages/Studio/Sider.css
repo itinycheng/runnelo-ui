@@ -1,0 +1,14 @@
+/* Overlay the resize hit-area on the panel divider without widening the gutter. */
+.sider-resizer {
+  flex-shrink: 0;
+  width: 5px;
+  margin-left: -5px;
+  cursor: col-resize;
+  background: transparent;
+  transition: background 0.15s;
+}
+
+.sider-resizer:hover,
+.sider-resizer:active {
+  background: var(--ant-color-primary);
+}

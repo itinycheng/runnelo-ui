@@ -1,7 +1,8 @@
 # Runnelo UI Visual Refresh Plan
 
-Status: phase 1 theme foundation implemented; theme selection in review  
-Last updated: 2026-10-02
+Status: phase 1 foundation and cross-page interaction tokens implemented; theme selection in review
+
+Last updated: 2026-10-03
 
 ## Goal
 
@@ -82,6 +83,15 @@ Flink Coral is the default preset. The selected preset is stored locally for com
 - The base system now uses a 4/6/8px radius scale, 32/28px controls, neutral borders and surfaces, restrained focus rings, shadowless buttons, and component-level density settings.
 - Header branding is smaller and flatter: a violet mark with graphite wordmark instead of a prominent blue gradient.
 - Existing Dashboard, Runs, Admin, Studio, and Query layouts remain unchanged.
+
+## Cross-page Interaction Result
+
+- Root tokens now define the shared neutral hover, accent selection, active, focus, border, split-line, elevated-surface, and primary soft-state colors for every preset.
+- Menu, Tree, Table, Tabs, Segmented, Button, Input, Select, and Card states inherit those tokens; page code should not restate their hover or selected colors.
+- Dashboard metrics and panels use Ant Design Card surfaces instead of page-owned white backgrounds, borders, radii, and colored gradients.
+- Custom graph, chart, lifecycle, and run-status visuals use Ant Design semantic CSS variables instead of duplicated hex values.
+- Studio activity/filter/palette controls use Ant Design Button and CheckableTag interactions so hover, focus, and selection remain keyboard-visible and theme-aware.
+- Handwritten CSS is colocated with the owning Studio/FlowCanvas component and limited to structural layout or third-party state selectors.
 
 ## Studio DAG Preview Fix
 

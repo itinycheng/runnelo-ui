@@ -6,7 +6,7 @@ import {
   type JobFlowType,
   type JobType,
 } from "@/constants/enums";
-import { statusColor } from "@/utils/statusColor";
+import { executionStatusTagColor } from "@/utils/statusColor";
 
 /** Format a duration given in seconds as a human-readable string. */
 export function formatDuration(seconds: number): string {
@@ -39,7 +39,7 @@ export function execStatusSemantic(s: ExecutionStatus): RunSemantic {
 }
 
 export function getExecStatusColor(s: ExecutionStatus): string {
-  return statusColor(execStatusSemantic(s));
+  return executionStatusTagColor(s);
 }
 
 export function getExecStatusOptions(t: TFunction) {

@@ -45,7 +45,7 @@ export default function ResultPanel({ result }: ResultPanelProps) {
                   whiteSpace: "pre-wrap",
                   background: "var(--ant-color-fill-quaternary)",
                   padding: 12,
-                  borderRadius: 6,
+                  borderRadius: "var(--ant-border-radius)",
                   fontSize: 12,
                   color: result.success ? undefined : "var(--ant-color-error)",
                 }}

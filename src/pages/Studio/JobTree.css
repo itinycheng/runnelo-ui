@@ -1,0 +1,16 @@
+.job-tree-wrapper .ant-tree-node-content-wrapper:hover .job-tree-more,
+.job-tree-wrapper .ant-tree-treenode-selected .job-tree-more {
+  opacity: 1 !important;
+}
+
+.job-tree-wrapper .ant-tree-node-content-wrapper {
+  display: flex !important;
+  align-items: center !important;
+  width: 100%;
+  min-width: 0;
+}
+
+.job-tree-wrapper .ant-tree-title {
+  flex: 1;
+  min-width: 0;
+}
