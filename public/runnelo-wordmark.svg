@@ -1,4 +1,7 @@
 <svg role="img" viewBox="0 0 150 40" xmlns="http://www.w3.org/2000/svg">
   <title>Runnelo</title>
-  <text x="75" y="34" fill="#E6526F" font-family="Inter, Arial, Helvetica, sans-serif" font-size="38" font-weight="800" letter-spacing="-1.5" text-anchor="middle">Runnelo</text>
+  <style>
+    .wordmark { fill: #FFFFFF; }
+  </style>
+  <text class="wordmark" x="75" y="34" font-family="Inter, Arial, Helvetica, sans-serif" font-size="38" font-weight="800" letter-spacing="-1.5" text-anchor="middle">Runnelo</text>
 </svg>
