@@ -9,6 +9,7 @@ import { useQuery } from "@tanstack/react-query";
 import { queryClient } from "@/app/queryClient";
 import { queryKeys } from "@/api/queryKeys";
 import { useWorkspaceStore } from "@/stores/workspaceStore";
+import { actionColor, statusColor } from "@/utils/statusColor";
 
 const ACTIONS = ["CREATE", "UPDATE", "DELETE", "LOGIN", "LOGOUT", "RUN", "ONLINE", "OFFLINE"];
 const MODULES = ["user", "resource", "workflow", "task", "datasource", "config", "tag"];
@@ -23,31 +24,19 @@ const moduleLabel = (t: TFunc, module: string) => t(`audit.modules.${module}`, {
 const toValueEnum = (values: string[], label: (v: string) => string) =>
   Object.fromEntries(values.map((v) => [v, { text: label(v) }]));
 
-// Known action → tag color; unknown actions fall back to default (no color).
-const ACTION_COLOR: Record<string, string> = {
-  CREATE: "green",
-  UPDATE: "blue",
-  DELETE: "red",
-  LOGIN: "geekblue",
-  LOGOUT: "default",
-  RUN: "purple",
-  ONLINE: "cyan",
-  OFFLINE: "orange",
-};
-
 function AuditActionTag({ action }: { action: string }) {
   const { t } = useTranslation();
-  return <Tag color={ACTION_COLOR[action]}>{actionLabel(t, action)}</Tag>;
+  return <Tag color={actionColor(action)}>{actionLabel(t, action)}</Tag>;
 }
 
 function AuditResultTag({ result }: { result: AuditResult }) {
   const { t } = useTranslation();
   return result === "success" ? (
-    <Tag icon={<CheckCircleOutlined />} color="success">
+    <Tag icon={<CheckCircleOutlined />} color={statusColor(result)}>
       {t("audit.resultSuccess")}
     </Tag>
   ) : (
-    <Tag icon={<CloseCircleOutlined />} color="error">
+    <Tag icon={<CloseCircleOutlined />} color={statusColor(result)}>
       {t("audit.resultFailed")}
     </Tag>
   );

@@ -7,12 +7,12 @@ import type { Tag as TagModel } from "@/types/admin";
 import { createTag, deleteTag, getTags, updateTag } from "@/api/admin";
 import RowActions from "@/components/RowActions";
 import { TAG_TYPES, STATUSES, enumOptions } from "@/constants/enums";
-import { statusColor } from "@/utils/statusColor";
+import { enumColor, statusColor } from "@/utils/statusColor";
 import { useInvalidateWorkspaceList, useWorkspacePageQuery } from "@/app/useWorkspacePageQuery";
 
 function TagTypeTag({ type }: { type: TagModel["type"] }) {
   const { t } = useTranslation();
-  return <Tag>{t(`enums.TagType.${type}`)}</Tag>;
+  return <Tag color={enumColor(type)}>{t(`enums.TagType.${type}`)}</Tag>;
 }
 
 function TagStatusTag({ status }: { status: TagModel["status"] }) {

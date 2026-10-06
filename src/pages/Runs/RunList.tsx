@@ -12,6 +12,7 @@ import { RunStatusTag } from "./RunStatusTag";
 import RunDetailDrawer from "./RunDetailDrawer";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useWorkspaceStore } from "@/stores/workspaceStore";
+import { enumColor } from "@/utils/statusColor";
 import { queryKeys } from "@/api/queryKeys";
 
 type RunType = JobType | JobFlowType;
@@ -80,7 +81,7 @@ function useRunColumns(openDetail: (id: string) => void, onKill: (id: string) =>
         width: 110,
         valueType: "select",
         valueEnum: buildTypeEnum(t),
-        render: (_, row) => <Tag color={isFlowType(row.type) ? "purple" : "default"}>{typeLabel(row.type, t)}</Tag>,
+        render: (_, row) => <Tag color={enumColor(row.type)}>{typeLabel(row.type, t)}</Tag>,
       },
       {
         title: t("common.status"),

@@ -10,12 +10,13 @@ import { StatusDonut, RunListCard } from "./panels";
 import { useQuery } from "@tanstack/react-query";
 import { useWorkspaceStore } from "@/stores/workspaceStore";
 import { queryKeys } from "@/api/queryKeys";
-import { STATUS_TOKEN_COLOR } from "@/utils/statusColor";
+import { executionStatusVisualColor } from "@/utils/statusColor";
+import "./Dashboard.css";
 
 const TREND_SERIES = [
-  { key: "success", color: STATUS_TOKEN_COLOR.success },
-  { key: "failed", color: STATUS_TOKEN_COLOR.error },
-  { key: "running", color: STATUS_TOKEN_COLOR.warning },
+  { key: "success", color: executionStatusVisualColor("SUCCESS") },
+  { key: "failed", color: executionStatusVisualColor("FAILURE") },
+  { key: "running", color: executionStatusVisualColor("RUNNING") },
 ] as const;
 
 type TimeRange = "7d" | "14d" | "30d";
@@ -66,33 +67,35 @@ function TrendChart({ trend }: { trend: TrendDataPoint[] }) {
     void navigate(`/runs?status=${status}`);
   };
   return trend.length === 0 ? (
-    <Flex align="center" justify="center" style={{ height: 240 }}>
+    <Flex align="center" justify="center" className="dashboard-chart">
       <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={t("dashboard.trendUnavailable")} />
     </Flex>
   ) : (
-    <ResponsiveContainer width="100%" height={240}>
-      <LineChart data={trend} margin={{ top: 8, right: 12, bottom: 0, left: -16 }}>
-        <CartesianGrid strokeDasharray="3 3" stroke="var(--ant-color-border-secondary)" vertical={false} />
-        <XAxis dataKey="date" tick={{ fontSize: 12 }} stroke="var(--ant-color-text-tertiary)" />
-        <YAxis tick={{ fontSize: 12 }} stroke="var(--ant-color-text-tertiary)" allowDecimals={false} width={44} />
-        <Tooltip />
-        <Legend onClick={(e) => drill(String(e.dataKey))} wrapperStyle={{ cursor: "pointer" }} />
-        {TREND_SERIES.map((s) => (
-          <Line
-            key={s.key}
-            type="monotone"
-            dataKey={s.key}
-            name={t(`dashboard.${s.key}`)}
-            stroke={s.color}
-            strokeWidth={2}
-            dot={{ r: 3, cursor: "pointer" }}
-            activeDot={{ r: 5, cursor: "pointer", onClick: () => drill(s.key) }}
-            onClick={() => drill(s.key)}
-            style={{ cursor: "pointer" }}
-          />
-        ))}
-      </LineChart>
-    </ResponsiveContainer>
+    <div className="dashboard-chart">
+      <ResponsiveContainer width="100%" height="100%">
+        <LineChart data={trend} margin={{ top: 8, right: 12, bottom: 0, left: -16 }}>
+          <CartesianGrid strokeDasharray="3 3" stroke="var(--ant-color-border-secondary)" vertical={false} />
+          <XAxis dataKey="date" tick={{ fontSize: 12 }} stroke="var(--ant-color-text-tertiary)" />
+          <YAxis tick={{ fontSize: 12 }} stroke="var(--ant-color-text-tertiary)" allowDecimals={false} width={44} />
+          <Tooltip />
+          <Legend onClick={(e) => drill(String(e.dataKey))} wrapperStyle={{ cursor: "pointer" }} />
+          {TREND_SERIES.map((s) => (
+            <Line
+              key={s.key}
+              type="monotone"
+              dataKey={s.key}
+              name={t(`dashboard.${s.key}`)}
+              stroke={s.color}
+              strokeWidth={2}
+              dot={{ r: 3, cursor: "pointer" }}
+              activeDot={{ r: 5, cursor: "pointer", onClick: () => drill(s.key) }}
+              onClick={() => drill(s.key)}
+              style={{ cursor: "pointer" }}
+            />
+          ))}
+        </LineChart>
+      </ResponsiveContainer>
+    </div>
   );
 }
 
@@ -111,8 +114,11 @@ function TaskTrendCard({ trend, timeRange, onTimeRangeChange }: TaskTrendCardPro
   ];
 
   return (
-    <Col xs={24} lg={16}>
-      <Card style={{ height: "100%" }}>
+    <Col xs={24} lg={16} className="dashboard-panel">
+      <Card
+        style={{ height: "100%" }}
+        styles={{ body: { height: "100%", minHeight: 0, display: "flex", flexDirection: "column" } }}
+      >
         <Flex justify="space-between" align="center" style={{ marginBottom: 16 }}>
           <Typography.Text strong style={{ fontSize: 15 }}>
             {t("dashboard.taskTrend")}
@@ -150,8 +156,8 @@ export default function Dashboard() {
   const toRuns = (status?: string) => () => void navigate(status ? `/runs?status=${status}` : "/runs");
 
   return (
-    <div>
-      <Row gutter={[16, 16]} style={{ marginBottom: 16 }}>
+    <div className="dashboard-page">
+      <Row gutter={[16, 16]} className="dashboard-page__row">
         <StatCard
           title={t("dashboard.totalRuns")}
           scope={t("dashboard.last24h")}
@@ -165,7 +171,7 @@ export default function Dashboard() {
           scope={t("dashboard.last24h")}
           value={stats?.successTasks ?? "-"}
           icon={<CheckCircleOutlined />}
-          iconColor={STATUS_TOKEN_COLOR.success}
+          iconColor={executionStatusVisualColor("SUCCESS")}
           onClick={toRuns("SUCCESS")}
         />
         <StatCard
@@ -173,7 +179,7 @@ export default function Dashboard() {
           scope={t("dashboard.last24h")}
           value={stats?.failedTasks ?? "-"}
           icon={<CloseCircleOutlined />}
-          iconColor={STATUS_TOKEN_COLOR.error}
+          iconColor={executionStatusVisualColor("FAILURE")}
           onClick={toRuns("FAILURE")}
         />
         <StatCard
@@ -181,21 +187,22 @@ export default function Dashboard() {
           scope={t("dashboard.now")}
           value={stats?.runningTasks ?? "-"}
           icon={<SyncOutlined />}
-          iconColor={STATUS_TOKEN_COLOR.warning}
+          iconColor={executionStatusVisualColor("RUNNING")}
           onClick={toRuns("RUNNING")}
         />
       </Row>
 
-      <Row gutter={[16, 16]}>
-        <Col xs={24} lg={8}>
+      <Row gutter={[16, 16]} className="dashboard-page__row">
+        <Col xs={24} lg={8} className="dashboard-panel">
           <StatusDonut stats={stats} />
         </Col>
         <TaskTrendCard trend={trend} timeRange={timeRange} onTimeRangeChange={setTimeRange} />
-
-        <Col xs={24} lg={12}>
+      </Row>
+      <Row gutter={[16, 16]} className="dashboard-page__row dashboard-page__row--last">
+        <Col xs={24} lg={12} className="dashboard-panel">
           <RunListCard status="FAILURE" title={t("dashboard.recentFailed")} emptyText={t("dashboard.noFailures")} />
         </Col>
-        <Col xs={24} lg={12}>
+        <Col xs={24} lg={12} className="dashboard-panel">
           <RunListCard status="RUNNING" title={t("dashboard.runningNow")} emptyText={t("dashboard.nothingRunning")} />
         </Col>
       </Row>

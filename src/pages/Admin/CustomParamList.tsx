@@ -8,10 +8,11 @@ import { createParam, deleteParam, getParams, updateParam } from "@/api/admin";
 import RowActions from "@/components/RowActions";
 import { JOB_PARAM_TYPES, enumOptions } from "@/constants/enums";
 import { useInvalidateWorkspaceList, useWorkspacePageQuery } from "@/app/useWorkspacePageQuery";
+import { enumColor } from "@/utils/statusColor";
 
 function ParamTypeTag({ type }: { type: CustomParam["type"] }) {
   const { t } = useTranslation();
-  return <Tag color="blue">{t(`enums.JobParamType.${type}`)}</Tag>;
+  return <Tag color={enumColor(type)}>{t(`enums.JobParamType.${type}`)}</Tag>;
 }
 
 interface ParamActionsCellProps {

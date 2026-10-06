@@ -22,6 +22,7 @@ import { useQuery } from "@tanstack/react-query";
 import { queryKeys } from "@/api/queryKeys";
 import { useWorkspaceStore } from "@/stores/workspaceStore";
 import { execIsRunning } from "./runStatus";
+import { enumColor } from "@/utils/statusColor";
 
 const preStyle: React.CSSProperties = {
   whiteSpace: "pre-wrap",
@@ -58,7 +59,7 @@ function RunMeta({ run }: { run: FlowRunDetail }) {
   return (
     <>
       <Flex align="center" gap={8} style={{ marginBottom: 12 }}>
-        <Tag>{t(`enums.${typeGroup}.${run.type}`)}</Tag>
+        <Tag color={enumColor(run.type)}>{t(`enums.${typeGroup}.${run.type}`)}</Tag>
         <Typography.Text strong>{run.name}</Typography.Text>
         <RunStatusTag status={run.status} />
       </Flex>
@@ -85,7 +86,7 @@ function FlowDetail({ run }: { run: FlowRunDetail }) {
       title: t("common.type"),
       dataIndex: "type",
       width: 90,
-      render: (v: string) => <Tag>{t(`enums.JobType.${v}`)}</Tag>,
+      render: (v: string) => <Tag color={enumColor(v)}>{t(`enums.JobType.${v}`)}</Tag>,
     },
     {
       title: t("common.status"),

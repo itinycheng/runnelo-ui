@@ -11,7 +11,7 @@ import { formatDuration, FAILED_EXEC_STATUSES, RUNNING_EXEC_STATUSES } from "@/p
 import { useQuery } from "@tanstack/react-query";
 import { useWorkspaceStore } from "@/stores/workspaceStore";
 import { queryKeys } from "@/api/queryKeys";
-import { STATUS_TOKEN_COLOR } from "@/utils/statusColor";
+import { enumColor, executionStatusVisualColor, STATUS_TOKEN_COLOR } from "@/utils/statusColor";
 
 function CardHeader({ title, onViewAll }: { title: string; onViewAll?: () => void }) {
   const { t } = useTranslation();
@@ -49,19 +49,22 @@ export function StatusDonut({ stats }: { stats: DashboardStats | null }) {
   const rate = total ? Math.round((success / total) * 100) : 0;
 
   const data: DonutSlice[] = [
-    { status: "SUCCESS", name: t("dashboard.success"), value: success, color: STATUS_TOKEN_COLOR.success },
-    { status: "FAILURE", name: t("dashboard.failed"), value: failed, color: STATUS_TOKEN_COLOR.error },
-    { status: "RUNNING", name: t("dashboard.running"), value: running, color: STATUS_TOKEN_COLOR.warning },
+    { status: "SUCCESS", name: t("dashboard.success"), value: success, color: executionStatusVisualColor("SUCCESS") },
+    { status: "FAILURE", name: t("dashboard.failed"), value: failed, color: executionStatusVisualColor("FAILURE") },
+    { status: "RUNNING", name: t("dashboard.running"), value: running, color: executionStatusVisualColor("RUNNING") },
     ...(other > 0
       ? [{ status: "" as const, name: t("dashboard.other"), value: other, color: STATUS_TOKEN_COLOR.neutral }]
       : []),
   ];
 
   return (
-    <Card style={{ height: "100%" }}>
+    <Card
+      style={{ height: "100%" }}
+      styles={{ body: { height: "100%", minHeight: 0, display: "flex", flexDirection: "column" } }}
+    >
       <CardHeader title={t("dashboard.statusBreakdown")} />
-      <div style={{ position: "relative" }}>
-        <ResponsiveContainer width="100%" height={240}>
+      <div className="dashboard-chart" style={{ position: "relative" }}>
+        <ResponsiveContainer width="100%" height="100%">
           <PieChart>
             <Pie
               data={data}
@@ -118,7 +121,7 @@ export function RunListCard({ status, title, emptyText }: RunListCardProps) {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const workspaceId = useWorkspaceStore((state) => state.currentId);
-  const params = { page: 1, pageSize: 6, statuses: STATUS_BUCKETS[status] };
+  const params = { page: 1, pageSize: 4, statuses: STATUS_BUCKETS[status] };
   const { data, isPending: loading } = useQuery({
     queryKey: queryKeys.runs.list(workspaceId, params),
     queryFn: () => getFlowRuns(params),
@@ -128,7 +131,10 @@ export function RunListCard({ status, title, emptyText }: RunListCardProps) {
   const items: FlowRun[] = data?.data ?? [];
 
   return (
-    <Card style={{ height: "100%" }}>
+    <Card
+      style={{ height: "100%" }}
+      styles={{ body: { height: "100%", minHeight: 0, display: "flex", flexDirection: "column" } }}
+    >
       <CardHeader title={title} onViewAll={() => navigate(`/runs?status=${status}`)} />
       {loading ? (
         <Flex justify="center" style={{ padding: 40 }}>
@@ -137,7 +143,7 @@ export function RunListCard({ status, title, emptyText }: RunListCardProps) {
       ) : items.length === 0 ? (
         <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={emptyText} style={{ padding: "24px 0" }} />
       ) : (
-        <Flex vertical>
+        <Flex vertical style={{ minHeight: 0, overflow: "hidden" }}>
           {items.map((run, i) => (
             <Flex
               key={run.id}
@@ -147,7 +153,7 @@ export function RunListCard({ status, title, emptyText }: RunListCardProps) {
               style={{ padding: "8px 0", borderTop: i ? "1px solid var(--ant-color-split)" : undefined }}
             >
               <Flex align="center" gap={8} style={{ minWidth: 0 }}>
-                <Tag style={{ margin: 0 }}>
+                <Tag color={enumColor(run.type)} style={{ margin: 0 }}>
                   {t(`enums.${JOB_FLOW_TYPES.includes(run.type as never) ? "JobFlowType" : "JobType"}.${run.type}`)}
                 </Tag>
                 <Typography.Text ellipsis style={{ maxWidth: 220 }}>

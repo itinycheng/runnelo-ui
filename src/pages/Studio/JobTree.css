@@ -9,8 +9,3 @@
   width: 100%;
   min-width: 0;
 }
-
-.job-tree-wrapper .ant-tree-title {
-  flex: 1;
-  min-width: 0;
-}

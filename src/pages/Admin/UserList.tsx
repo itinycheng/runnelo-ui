@@ -25,6 +25,7 @@ import { useQuery } from "@tanstack/react-query";
 import { queryClient } from "@/app/queryClient";
 import { queryKeys } from "@/api/queryKeys";
 import { useWorkspaceStore } from "@/stores/workspaceStore";
+import { enumColor, statusColor } from "@/utils/statusColor";
 
 /** Option for the workspace picker in the per-workspace role editor. */
 interface WsOption {
@@ -36,12 +37,12 @@ interface WsOption {
 function UserRoleTag({ roles }: { roles: ManagedUser["roles"] }) {
   const { t } = useTranslation();
   const global = roles?.global;
-  return global ? <Tag color="blue">{t(`enums.Role.${global}`)}</Tag> : <Tag>-</Tag>;
+  return global ? <Tag color={enumColor(global)}>{t(`enums.Role.${global}`)}</Tag> : <Tag>-</Tag>;
 }
 
 function UserStatusTag({ status }: { status: ManagedUser["status"] }) {
   const { t } = useTranslation();
-  return <Tag color={status === "NORMAL" ? "green" : "red"}>{t(`enums.UserStatus.${status}`)}</Tag>;
+  return <Tag color={statusColor(status)}>{t(`enums.UserStatus.${status}`)}</Tag>;
 }
 
 interface UserActionsCellProps {

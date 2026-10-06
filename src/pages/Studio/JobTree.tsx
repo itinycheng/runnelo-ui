@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { ConfigProvider, Dropdown, Flex, Modal, Spin, Tree, message } from "antd";
+import { ConfigProvider, Dropdown, Flex, Modal, Skeleton, Tree, message } from "antd";
 import { DownOutlined, EllipsisOutlined } from "@ant-design/icons";
 import type { MenuProps, ThemeConfig, TreeDataNode } from "antd";
 import { compactMenuTheme } from "@/theme";
@@ -26,6 +26,17 @@ import "./JobTree.css";
 const NODE_FONT_SIZE = 14; // row text size (group count uses this - 1)
 const NODE_ROW_HEIGHT = 30; // row height == line spacing (virtual-scroll item height)
 const ICON_SIZE = 18; // leaf type-icon size
+
+const jobTreeStyles = {
+  root: { color: "var(--ant-color-text-secondary)" },
+  itemTitle: { flex: 1, minWidth: 0 },
+} as const;
+const treeSkeletonProps = {
+  active: true,
+  title: false,
+  paragraph: { rows: 4, width: ["72%", "58%", "66%", "48%"] },
+  style: { padding: "4px 8px" },
+};
 
 /** Tree row density/typography, layered on top of the compact menu theme. */
 const jobTreeTheme: ThemeConfig = {
@@ -446,11 +457,11 @@ export default function JobTree({
   return (
     <ConfigProvider theme={jobTreeTheme}>
       {contextHolder}
-      <div ref={containerRef} style={{ height: "100%" }}>
-        <Spin spinning={treeLoading}>
+      <div ref={containerRef} style={{ height: "100%", minHeight: 0 }} aria-busy={treeLoading}>
+        <Skeleton {...treeSkeletonProps} loading={treeLoading && builtTreeData.length === 0}>
           <Tree
             className="job-tree-wrapper"
-            styles={{ root: { color: "var(--ant-color-text-secondary)" } }}
+            styles={jobTreeStyles}
             showIcon
             showLine
             blockNode
@@ -464,7 +475,7 @@ export default function JobTree({
             onRightClick={handleRightClick}
             treeData={builtTreeData}
           />
-        </Spin>
+        </Skeleton>
       </div>
       {contextMenu.visible && contextMenu.node && (
         <Dropdown

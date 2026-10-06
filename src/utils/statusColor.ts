@@ -54,8 +54,10 @@ export const STATUS_TOKEN_BG = {
 const STATUS_COLOR: Record<string, string> = {
   // healthy / active
   success: "green",
+  normal: "green",
   active: "green",
   online: "green",
+  enable: "green",
   enabled: "green",
   ok: "green",
   // in progress
@@ -66,12 +68,16 @@ const STATUS_COLOR: Record<string, string> = {
   waiting: "gold",
   // inactive / neutral
   offline: "default",
+  disable: "default",
   disabled: "default",
   stopped: "default",
   inactive: "default",
   // failure
   failed: "error",
+  failure: "error",
   error: "error",
+  locked: "red",
+  delete: "red",
   deleted: "red",
   // aborted / warning
   killed: "warning",
@@ -94,4 +100,21 @@ export function enumColor(value: string | undefined | null): string {
   let hash = 0;
   for (let i = 0; i < value.length; i++) hash = (hash * 31 + value.charCodeAt(i)) >>> 0;
   return ENUM_PALETTE[hash % ENUM_PALETTE.length];
+}
+
+/** Audit actions are categorical, but a few carry established semantic meaning. */
+const ACTION_COLOR: Record<string, string> = {
+  CREATE: "green",
+  UPDATE: "blue",
+  DELETE: "red",
+  LOGIN: "geekblue",
+  LOGOUT: "default",
+  RUN: "purple",
+  ONLINE: "cyan",
+  OFFLINE: "orange",
+};
+
+export function actionColor(value: string | undefined | null): string {
+  if (!value) return "default";
+  return ACTION_COLOR[value.toUpperCase()] ?? enumColor(value);
 }
