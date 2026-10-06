@@ -1,12 +1,16 @@
 import { useEffect, useMemo, useState } from "react";
 import type { Key } from "react";
 import { useTranslation } from "react-i18next";
-import { Empty, Flex, Input, Layout, Spin, Tree, Typography, type TreeDataNode } from "antd";
-import { DatabaseOutlined, TableOutlined } from "@ant-design/icons";
+import { Button, Empty, Flex, Input, Select, Spin, Tree, Typography, type TreeDataNode } from "antd";
+import { DatabaseOutlined, MenuFoldOutlined, SearchOutlined, TableOutlined } from "@ant-design/icons";
 import { getDatabases, getTables } from "@/api/query";
 
 interface SchemaSidebarProps {
   datasourceId?: string;
+  datasources: { label: string; value: string }[];
+  onDatasourceChange: (id: string) => void;
+  showHeader?: boolean;
+  onCollapse?: () => void;
   /** Insert the clicked table (qualified as `db.table`) into the editor. */
   onInsert: (text: string) => void;
 }
@@ -37,14 +41,25 @@ function filterTree(nodes: TreeDataNode[], q: string): TreeDataNode[] {
 }
 
 /** Sider header: database icon + "Schema" label. */
-function SchemaHeader() {
+function SchemaHeader({ onCollapse }: { onCollapse?: () => void }) {
   const { t } = useTranslation();
   return (
-    <Flex align="center" gap={6} style={{ padding: "8px 10px" }}>
-      <DatabaseOutlined style={{ color: "var(--ant-color-text-tertiary)" }} />
-      <Typography.Text strong style={{ fontSize: 13 }}>
-        {t("query.schema")}
-      </Typography.Text>
+    <Flex align="center" justify="space-between" style={{ minHeight: 40 }}>
+      <Flex align="center" gap={8}>
+        <DatabaseOutlined style={{ color: "var(--ant-color-text-tertiary)" }} />
+        <Typography.Text strong>{t("query.schema")}</Typography.Text>
+      </Flex>
+      {onCollapse && (
+        <Button
+          type="text"
+          size="small"
+          shape="circle"
+          icon={<MenuFoldOutlined />}
+          aria-label={t("query.hideSchema")}
+          title={t("query.hideSchema")}
+          onClick={onCollapse}
+        />
+      )}
     </Flex>
   );
 }
@@ -52,13 +67,19 @@ function SchemaHeader() {
 // Prettier expands this compact tree renderer slightly past the repository's
 // generic function-size guard; keeping its tightly coupled UI state together is clearer.
 // eslint-disable-next-line max-lines-per-function
-export default function SchemaSidebar({ datasourceId, onInsert }: SchemaSidebarProps) {
+export default function SchemaSidebar({
+  datasourceId,
+  datasources,
+  onDatasourceChange,
+  showHeader = true,
+  onCollapse,
+  onInsert,
+}: SchemaSidebarProps) {
   const { t } = useTranslation();
   const [treeData, setTreeData] = useState<TreeDataNode[]>([]);
   const [loading, setLoading] = useState(false);
   const [filter, setFilter] = useState("");
   const [expandedKeys, setExpandedKeys] = useState<Key[]>([]);
-  const [collapsed, setCollapsed] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -101,43 +122,47 @@ export default function SchemaSidebar({ datasourceId, onInsert }: SchemaSidebarP
   const searchExpand = useMemo(() => (q ? shown.map((db) => db.key) : null), [q, shown]);
 
   return (
-    <Layout.Sider
-      width={240}
-      theme="light"
-      style={{ borderRight: "1px solid var(--ant-color-split)" }}
-      collapsible
-      collapsed={collapsed}
-      onCollapse={setCollapsed}
-      collapsedWidth={0}
-      zeroWidthTriggerStyle={{ top: 8 }}
+    <Flex
+      vertical
+      style={{ height: "100%", minWidth: 0, background: "var(--ant-color-bg-container)", overflow: "hidden" }}
     >
-      {/* Column layout so the list flex-scrolls beneath the fixed header + search. */}
-      <div style={{ display: "flex", flexDirection: "column", height: "100%" }}>
-        <SchemaHeader />
-        <div style={{ padding: "0 10px 8px" }}>
-          <Input.Search
-            size="small"
-            allowClear
-            placeholder={t("query.searchTable")}
-            value={filter}
-            onChange={(e) => setFilter(e.target.value)}
-            disabled={!datasourceId}
-          />
-        </div>
-        <div style={{ flex: 1, minHeight: 0, overflowY: "auto", paddingBottom: 8 }}>
-          <SchemaBody
-            datasourceId={datasourceId}
-            loading={loading}
-            empty={treeData.length === 0}
-            treeData={shown}
-            expandedKeys={searchExpand ?? expandedKeys}
-            onExpand={setExpandedKeys}
-            onLoadData={onLoadData}
-            onInsert={onInsert}
-          />
-        </div>
+      <Flex vertical gap={8} style={{ flexShrink: 0, padding: "8px 12px 12px" }}>
+        {showHeader && <SchemaHeader onCollapse={onCollapse} />}
+        <Select
+          size="small"
+          placeholder={t("query.selectDatasource")}
+          options={datasources}
+          value={datasourceId}
+          onChange={onDatasourceChange}
+          showSearch
+          optionFilterProp="label"
+          data-testid="datasource-select"
+        />
+        <Input
+          size="small"
+          allowClear
+          prefix={<SearchOutlined />}
+          placeholder={t("query.searchTable")}
+          value={filter}
+          onChange={(e) => setFilter(e.target.value)}
+          disabled={!datasourceId}
+        />
+      </Flex>
+      <div
+        style={{ flex: 1, minHeight: 0, overflowY: "auto", borderTop: "1px solid var(--ant-color-split)", padding: 8 }}
+      >
+        <SchemaBody
+          datasourceId={datasourceId}
+          loading={loading}
+          empty={treeData.length === 0}
+          treeData={shown}
+          expandedKeys={searchExpand ?? expandedKeys}
+          onExpand={setExpandedKeys}
+          onLoadData={onLoadData}
+          onInsert={onInsert}
+        />
       </div>
-    </Layout.Sider>
+    </Flex>
   );
 }
 

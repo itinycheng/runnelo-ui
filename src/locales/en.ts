@@ -669,6 +669,7 @@ const en = {
   },
 
   query: {
+    console: "Execution Console",
     selectDatasource: "Select data source",
     run: "Run",
     sqlPlaceholder: "Enter SQL statement",
@@ -689,6 +690,8 @@ const en = {
     exportCsv: "Export CSV",
     rowsMeta: "{{rows}} rows · {{ms}} ms",
     schema: "Schema",
+    showSchema: "Show schema",
+    hideSchema: "Hide schema",
     searchTable: "Search tables",
     selectDatasourceForTables: "Select a data source to browse its tables",
     noDatabases: "No databases found",

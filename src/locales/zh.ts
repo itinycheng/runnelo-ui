@@ -667,6 +667,7 @@ const zh = {
   },
 
   query: {
+    console: "执行控制台",
     selectDatasource: "选择数据源",
     run: "执行",
     sqlPlaceholder: "输入 SQL 语句",
@@ -687,6 +688,8 @@ const zh = {
     exportCsv: "导出 CSV",
     rowsMeta: "{{rows}} 行 · {{ms}} ms",
     schema: "库表",
+    showSchema: "展开库表",
+    hideSchema: "收起库表",
     searchTable: "搜索库 / 表",
     selectDatasourceForTables: "选择数据源以浏览其中的库表",
     noDatabases: "未找到库",

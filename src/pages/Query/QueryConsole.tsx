@@ -1,13 +1,17 @@
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Button, Card, Dropdown, Flex, Layout, Select, Space, Tooltip, Typography } from "antd";
+import { Button, Card, Drawer, Dropdown, Flex, Grid, Layout, Space, Tag, Tooltip, Typography } from "antd";
 import type { MenuProps } from "antd";
 import {
   CheckCircleFilled,
+  CodeOutlined,
   CloseCircleFilled,
   ClearOutlined,
   DownloadOutlined,
   FormatPainterOutlined,
   HistoryOutlined,
+  MenuOutlined,
+  MenuUnfoldOutlined,
   PlayCircleOutlined,
 } from "@ant-design/icons";
 import CodeEditor from "@/components/CodeEditor";
@@ -15,8 +19,9 @@ import { PAGE_PADDING, SECTION_GAP } from "@/constants/layout";
 import type { QueryResult } from "@/types/query";
 import ResultPanel from "./ResultPanel";
 import SchemaSidebar from "./SchemaSidebar";
-import { useQueryConsole, type DsOption } from "./useQueryConsole";
+import { useQueryConsole } from "./useQueryConsole";
 import type { QueryHistoryEntry } from "./useQueryHistory";
+import { enumColor } from "@/utils/statusColor";
 
 function formatTime(ts: number): string {
   const d = new Date(ts);
@@ -26,76 +31,130 @@ function formatTime(ts: number): string {
 
 export default function QueryConsole() {
   const { t } = useTranslation();
-  const {
-    editorRef,
-    options,
-    datasourceId,
-    setDatasourceId,
-    sql,
-    setSql,
-    running,
-    result,
-    history,
-    run,
-    formatSql,
-    clear,
-    pickHistory,
-    exportCsv,
-    insertToken,
-  } = useQueryConsole();
+  const consoleState = useQueryConsole();
+  const compact = Grid.useBreakpoint().lg === false;
+  const [schemaOpen, setSchemaOpen] = useState(false);
+  const [schemaCollapsed, setSchemaCollapsed] = useState(false);
+  const schema = (
+    <SchemaSidebar
+      datasourceId={consoleState.datasourceId}
+      datasources={consoleState.options}
+      onDatasourceChange={consoleState.setDatasourceId}
+      onInsert={consoleState.insertToken}
+      showHeader={!compact}
+      onCollapse={compact ? undefined : () => setSchemaCollapsed(true)}
+    />
+  );
+
+  if (compact) {
+    return (
+      <div style={{ position: "relative", height: "100%" }} data-testid="query-console">
+        <QueryWorkspace consoleState={consoleState} onOpenSchema={() => setSchemaOpen(true)} />
+        <Drawer
+          title={t("query.schema")}
+          placement="left"
+          width={280}
+          open={schemaOpen}
+          onClose={() => setSchemaOpen(false)}
+          getContainer={false}
+          rootStyle={{ position: "absolute" }}
+          styles={{ body: { padding: 0 } }}
+        >
+          {schema}
+        </Drawer>
+      </div>
+    );
+  }
+
+  return (
+    <Flex style={{ height: "100%", background: "var(--ant-color-bg-layout)" }} data-testid="query-console">
+      <Layout.Sider
+        theme="light"
+        width={264}
+        collapsedWidth={44}
+        collapsed={schemaCollapsed}
+        collapsible
+        trigger={null}
+        style={{ borderRight: "1px solid var(--ant-color-split)", overflow: "hidden" }}
+      >
+        {schemaCollapsed ? (
+          <Tooltip title={t("query.showSchema")} placement="right">
+            <Button
+              type="text"
+              shape="circle"
+              icon={<MenuUnfoldOutlined />}
+              aria-label={t("query.showSchema")}
+              onClick={() => setSchemaCollapsed(false)}
+              style={{ margin: 8 }}
+            />
+          </Tooltip>
+        ) : (
+          schema
+        )}
+      </Layout.Sider>
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <QueryWorkspace consoleState={consoleState} />
+      </div>
+    </Flex>
+  );
+}
+
+function QueryWorkspace({
+  consoleState,
+  onOpenSchema,
+}: {
+  consoleState: ReturnType<typeof useQueryConsole>;
+  onOpenSchema?: () => void;
+}) {
+  const { t } = useTranslation();
+  const { editorRef, sql, setSql, running, result, history, run, formatSql, clear, pickHistory, exportCsv } =
+    consoleState;
 
   const canExport = !!result?.success && result.rows.length > 0;
 
   return (
-    <Layout hasSider style={{ height: "100%", background: "transparent" }} data-testid="query-console">
-      <SchemaSidebar datasourceId={datasourceId} onInsert={insertToken} />
-      <Layout.Content style={{ minWidth: 0, padding: PAGE_PADDING, overflow: "auto" }}>
-        <Card size="small" style={{ marginBottom: SECTION_GAP }}>
-          <Toolbar
-            options={options}
-            datasourceId={datasourceId}
-            onDatasourceChange={setDatasourceId}
-            running={running}
-            onRun={run}
-            onFormat={formatSql}
-            onClear={clear}
-            history={history.entries}
-            onPickHistory={pickHistory}
-            onClearHistory={history.clear}
-          />
-          <CodeEditor
-            ref={editorRef}
-            value={sql}
-            onChange={setSql}
-            language="sql"
-            placeholder={t("query.sqlPlaceholder")}
-            onRun={run}
-          />
-        </Card>
-        <Card size="small">
-          <Flex justify="space-between" align="center" style={{ marginBottom: 8, minHeight: 24 }}>
-            <ResultMeta result={result} />
-            <Button
-              size="small"
-              icon={<DownloadOutlined />}
-              disabled={!canExport}
-              onClick={exportCsv}
-              data-testid="export-csv-button"
-            >
-              {t("query.exportCsv")}
-            </Button>
-          </Flex>
-          <ResultPanel result={result} />
-        </Card>
-      </Layout.Content>
-    </Layout>
+    <Flex vertical style={{ height: "100%", minWidth: 0, padding: PAGE_PADDING, overflow: "auto" }}>
+      <Card size="small" style={{ marginBottom: SECTION_GAP }}>
+        <Toolbar
+          onOpenSchema={onOpenSchema}
+          running={running}
+          onRun={run}
+          onFormat={formatSql}
+          onClear={clear}
+          history={history.entries}
+          onPickHistory={pickHistory}
+          onClearHistory={history.clear}
+        />
+        <CodeEditor
+          ref={editorRef}
+          value={sql}
+          onChange={setSql}
+          language="sql"
+          placeholder={t("query.sqlPlaceholder")}
+          onRun={run}
+        />
+      </Card>
+      <Card size="small">
+        <Flex justify="space-between" align="center" style={{ marginBottom: 8, minHeight: 24 }}>
+          <ResultMeta result={result} />
+          <Button
+            size="small"
+            icon={<DownloadOutlined />}
+            disabled={!canExport}
+            onClick={exportCsv}
+            data-testid="export-csv-button"
+          >
+            {t("query.exportCsv")}
+          </Button>
+        </Flex>
+        <ResultPanel result={result} />
+      </Card>
+    </Flex>
   );
 }
 
 interface ToolbarProps {
-  options: DsOption[];
-  datasourceId?: string;
-  onDatasourceChange: (id: string) => void;
+  onOpenSchema?: () => void;
   running: boolean;
   onRun: () => void;
   onFormat: () => void;
@@ -107,7 +166,7 @@ interface ToolbarProps {
 
 function Toolbar(props: ToolbarProps) {
   const { t } = useTranslation();
-  const { options, datasourceId, onDatasourceChange, running, onRun, onFormat, onClear } = props;
+  const { onOpenSchema, running, onRun, onFormat, onClear } = props;
 
   const historyItems: MenuProps["items"] = props.history.length
     ? [
@@ -131,17 +190,34 @@ function Toolbar(props: ToolbarProps) {
 
   return (
     <Flex justify="space-between" align="center" wrap gap={8} style={{ marginBottom: 12 }}>
-      <Space wrap>
-        <Select
-          placeholder={t("query.selectDatasource")}
-          style={{ width: 280 }}
-          options={options}
-          value={datasourceId}
-          onChange={onDatasourceChange}
-          showSearch
-          optionFilterProp="label"
-          data-testid="datasource-select"
-        />
+      <Space size={8}>
+        {onOpenSchema && (
+          <Button
+            type="text"
+            shape="circle"
+            icon={<MenuOutlined />}
+            aria-label={t("query.schema")}
+            onClick={onOpenSchema}
+          />
+        )}
+        <CodeOutlined style={{ color: "var(--ant-color-text-tertiary)" }} />
+        <Typography.Text strong>{t("query.console")}</Typography.Text>
+        <Tag color={enumColor("SQL")} style={{ margin: 0 }}>
+          SQL
+        </Tag>
+      </Space>
+      <Space wrap size={6}>
+        <Dropdown menu={{ items: historyItems }} trigger={["click"]} placement="bottomRight">
+          <Button icon={<HistoryOutlined />} data-testid="history-button">
+            {t("query.history")}
+          </Button>
+        </Dropdown>
+        <Button icon={<ClearOutlined />} onClick={onClear}>
+          {t("query.clear")}
+        </Button>
+        <Button icon={<FormatPainterOutlined />} onClick={onFormat}>
+          {t("query.formatSql")}
+        </Button>
         <Tooltip title={t("query.runTooltip")}>
           <Button
             type="primary"
@@ -153,18 +229,7 @@ function Toolbar(props: ToolbarProps) {
             {t("query.run")}
           </Button>
         </Tooltip>
-        <Button icon={<FormatPainterOutlined />} onClick={onFormat}>
-          {t("query.formatSql")}
-        </Button>
-        <Button icon={<ClearOutlined />} onClick={onClear}>
-          {t("query.clear")}
-        </Button>
       </Space>
-      <Dropdown menu={{ items: historyItems }} trigger={["click"]} placement="bottomRight">
-        <Button icon={<HistoryOutlined />} data-testid="history-button">
-          {t("query.history")}
-        </Button>
-      </Dropdown>
     </Flex>
   );
 }
