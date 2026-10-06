@@ -1,9 +1,11 @@
-import { Button, ConfigProvider, Dropdown, Flex, Tooltip, Typography, type MenuProps } from "antd";
+import { Button, ConfigProvider, Dropdown, Flex, Typography, type MenuProps } from "antd";
 import { BgColorsOutlined, CheckOutlined } from "@ant-design/icons";
+import { useTranslation } from "react-i18next";
 import { appPalettes, compactMenuTheme, THEME_PRESET_KEYS, type ThemePresetKey } from "@/theme";
 import { useThemeStore } from "@/stores/themeStore";
 
 export default function ThemeSwitcher() {
+  const { t } = useTranslation();
   const preset = useThemeStore((state) => state.preset);
   const setPreset = useThemeStore((state) => state.setPreset);
 
@@ -44,9 +46,13 @@ export default function ThemeSwitcher() {
         trigger={["click"]}
         placement="bottomRight"
       >
-        <Tooltip title="Preview theme">
-          <Button type="text" size="small" icon={<BgColorsOutlined />} aria-label="Preview theme" />
-        </Tooltip>
+        <Button
+          type="text"
+          shape="circle"
+          icon={<BgColorsOutlined />}
+          title={t("theme.switchTheme")}
+          aria-label={t("theme.switchTheme")}
+        />
       </Dropdown>
     </ConfigProvider>
   );

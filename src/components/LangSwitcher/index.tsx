@@ -1,4 +1,4 @@
-import { ConfigProvider, Dropdown, Flex, type MenuProps } from "antd";
+import { Button, ConfigProvider, Dropdown, Flex, type MenuProps } from "antd";
 import { GlobalOutlined, CheckOutlined } from "@ant-design/icons";
 import { useTranslation } from "react-i18next";
 import { compactMenuTheme } from "@/theme";
@@ -10,7 +10,7 @@ const LANG_OPTIONS: { key: Lang; label: string }[] = [
 ];
 
 export default function LangSwitcher() {
-  const { i18n } = useTranslation();
+  const { i18n, t } = useTranslation();
   const lang: Lang = i18n.language === "zh" ? "zh" : "en";
 
   const items: MenuProps["items"] = LANG_OPTIONS.map((opt) => ({
@@ -30,9 +30,13 @@ export default function LangSwitcher() {
   return (
     <ConfigProvider theme={compactMenuTheme}>
       <Dropdown menu={{ items, onClick: handleClick, selectedKeys: [lang] }} trigger={["click"]}>
-        <Flex align="center" justify="center">
-          <GlobalOutlined />
-        </Flex>
+        <Button
+          type="text"
+          shape="circle"
+          icon={<GlobalOutlined />}
+          title={t("common.language")}
+          aria-label={t("common.language")}
+        />
       </Dropdown>
     </ConfigProvider>
   );

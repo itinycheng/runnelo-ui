@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { Outlet, useNavigate, useLocation } from "react-router-dom";
-import { Typography } from "antd";
+import { ConfigProvider, Space, Typography, type ThemeConfig } from "antd";
 import { ProLayout, type ProLayoutProps } from "@ant-design/pro-components";
 import { useTranslation } from "react-i18next";
 import {
@@ -39,6 +39,22 @@ type TFunc = (key: string) => string;
 
 type LayoutRoute = NonNullable<ProLayoutProps["route"]>;
 type LayoutRouteItem = NonNullable<LayoutRoute["routes"]>[number];
+
+const headerActionTheme: ThemeConfig = {
+  components: { Button: { onlyIconSize: 16 } },
+};
+
+function HeaderActions() {
+  return (
+    <ConfigProvider theme={headerActionTheme}>
+      <Space size={4}>
+        <ThemeSwitcher />
+        <LangSwitcher />
+        <UserAvatar />
+      </Space>
+    </ConfigProvider>
+  );
+}
 
 /**
  * Recursively drop menu items the current user lacks the route's Permission
@@ -164,11 +180,7 @@ export default function MainLayout() {
         menuItemRender={(item, dom) => (
           <a onClick={() => item.path && item.name !== "_jobs" && navigate(item.path)}>{dom}</a>
         )}
-        actionsRender={() => [
-          <ThemeSwitcher key="theme" />,
-          <LangSwitcher key="lang" aria-hidden />,
-          <UserAvatar key="avatar" />,
-        ]}
+        actionsRender={() => [<HeaderActions key="header-actions" />]}
         footerRender={
           isDashboard
             ? () => (

@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render, screen, fireEvent } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import { MemoryRouter } from "react-router-dom";
 import UserAvatar from "./index";
 import { useAuthStore, useAuthPermissions } from "@/stores/authStore";
@@ -36,12 +37,12 @@ describe("UserAvatar", () => {
     );
   });
 
-  it("renders the global role and effective permission tags for admin", () => {
+  it("renders the global role and effective permission tags for admin", async () => {
     renderAvatar();
 
-    fireEvent.click(screen.getByText("admin"));
+    await userEvent.click(screen.getByRole("button", { name: "Account: admin" }));
 
-    expect(screen.getByText("Super Admin")).toBeInTheDocument();
+    expect(await screen.findByText("Super Admin")).toBeInTheDocument();
     expect(screen.getByText("System manage")).toBeInTheDocument();
     expect(screen.getByText("Workspace view")).toBeInTheDocument();
   });

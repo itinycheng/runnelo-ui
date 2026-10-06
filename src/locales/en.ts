@@ -44,6 +44,7 @@ const en = {
     actionFailed: "Operation failed, please retry",
     invalidJson: "Invalid JSON",
     durationHint: "e.g. 5s / 1m / 2h / 1d",
+    language: "Language",
   },
 
   menu: {
@@ -271,6 +272,7 @@ const en = {
   },
 
   user: {
+    account: "Account",
     roles: "Roles",
     permissions: "Permissions",
     logout: "Logout",

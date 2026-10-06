@@ -1,4 +1,4 @@
-import { Avatar, ConfigProvider, Dropdown, Flex, Tag, Space, Typography, type MenuProps } from "antd";
+import { Button, ConfigProvider, Dropdown, Tag, Space, Typography, type MenuProps } from "antd";
 import { UserOutlined, LogoutOutlined, SafetyCertificateOutlined } from "@ant-design/icons";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
@@ -17,16 +17,15 @@ export default function UserAvatar() {
   const { t } = useTranslation();
 
   if (!user) return null;
-
   const handleLogout = async () => {
     const redirectUrl = await logout();
     if (redirectUrl) window.location.assign(redirectUrl);
     else void navigate("/login");
   };
-
   const globalRole = user.roles.global;
   const workspaceRole = currentWorkspaceId != null ? user.roles.workspaces?.[currentWorkspaceId] : undefined;
   const currentWorkspaceName = workspaces.find((w) => w.id === currentWorkspaceId)?.name;
+  const accountLabel = `${t("user.account")}: ${user.username}`;
 
   const items: MenuProps["items"] = [
     {
@@ -83,10 +82,7 @@ export default function UserAvatar() {
   return (
     <ConfigProvider theme={compactMenuTheme}>
       <Dropdown menu={{ items }} trigger={["click"]} placement="bottomRight">
-        <Flex align="center" gap="middle">
-          <Avatar icon={<UserOutlined />} />
-          <Typography.Text>{user.username}</Typography.Text>
-        </Flex>
+        <Button type="text" shape="circle" icon={<UserOutlined />} aria-label={accountLabel} />
       </Dropdown>
     </ConfigProvider>
   );

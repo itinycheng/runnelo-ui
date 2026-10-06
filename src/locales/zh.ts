@@ -44,6 +44,7 @@ const zh = {
     actionFailed: "操作失败，请重试",
     invalidJson: "JSON 格式不正确",
     durationHint: "例如 5s / 1m / 2h / 1d",
+    language: "语言",
   },
 
   menu: {
@@ -270,6 +271,7 @@ const zh = {
   },
 
   user: {
+    account: "账户",
     roles: "角色",
     permissions: "权限列表",
     logout: "退出登录",
