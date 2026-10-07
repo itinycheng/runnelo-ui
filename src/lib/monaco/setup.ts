@@ -5,12 +5,16 @@
  * loader so nothing is fetched from a CDN at runtime, and points
  * `MonacoEnvironment` at the base editor worker bundled by Vite.
  *
- * SQL / shell highlighting only needs the base editor worker — no
+ * The supported basic languages only need the base editor worker — no
  * TS/JSON/CSS/HTML language workers.
  *
- * Imported once for its side effects from `main.tsx` before the app renders.
+ * Imported once for its side effects by the shared CodeEditor component.
  */
 import * as monaco from "monaco-editor/editor/editor.api";
+import "monaco-editor/editor/contrib/snippet/browser/snippetController2";
+import "monaco-editor/editor/contrib/suggest/browser/suggestController";
+import "monaco-editor/languages/definitions/java/register";
+import "monaco-editor/languages/definitions/python/register";
 import "monaco-editor/languages/definitions/sql/register";
 import "monaco-editor/languages/definitions/shell/register";
 import { loader } from "@monaco-editor/react";

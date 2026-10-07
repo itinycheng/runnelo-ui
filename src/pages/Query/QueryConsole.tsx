@@ -114,7 +114,7 @@ function QueryWorkspace({
 
   return (
     <Flex vertical style={{ height: "100%", minWidth: 0, padding: PAGE_PADDING, overflow: "auto" }}>
-      <Card size="small" style={{ marginBottom: SECTION_GAP }}>
+      <Card size="small" variant="borderless" style={{ marginBottom: SECTION_GAP, boxShadow: "none" }}>
         <Toolbar
           onOpenSchema={onOpenSchema}
           running={running}
@@ -134,7 +134,7 @@ function QueryWorkspace({
           onRun={run}
         />
       </Card>
-      <Card size="small">
+      <Card size="small" variant="borderless" style={{ boxShadow: "none" }}>
         <Flex justify="space-between" align="center" style={{ marginBottom: 8, minHeight: 24 }}>
           <ResultMeta result={result} />
           <Button

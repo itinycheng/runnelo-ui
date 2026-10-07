@@ -1,12 +1,37 @@
-import { forwardRef, useCallback, useEffect, useImperativeHandle, useRef, useState } from "react";
-import Editor, { type OnMount } from "@monaco-editor/react";
-import type { editor } from "monaco-editor";
+import {
+  forwardRef,
+  useCallback,
+  useEffect,
+  useImperativeHandle,
+  useMemo,
+  useRef,
+  useState,
+  type ForwardedRef,
+  type MutableRefObject,
+} from "react";
+import Editor, { type Monaco, type OnMount } from "@monaco-editor/react";
+import type { editor, IRange, languages } from "monaco-editor";
 import "@/lib/monaco/setup";
+import {
+  basicCompletionsFor,
+  mergeCompletions,
+  type CodeCompletion,
+  type CodeCompletionKind,
+  type CodeCompletionProvider,
+} from "./completions";
+import { languageForTaskType, languageLabel, type CodeEditorLanguage } from "./languages";
+import "./CodeEditor.css";
+
+export type { CodeCompletion, CodeCompletionProvider, CodeCompletionRequest } from "./completions";
+export type { CodeEditorLanguage } from "./languages";
 
 export interface CodeEditorProps {
   value: string;
   onChange: (value: string) => void;
-  language: "sql" | "shell";
+  /** Explicit language wins over automatic task-type detection. */
+  language?: CodeEditorLanguage;
+  /** Backend task type, e.g. MYSQL_SQL, SHELL, PYTHON, or FLINK_JAR. */
+  taskType?: string;
   /** Minimum editor height in px. Default 120. */
   minHeight?: number;
   /**
@@ -20,6 +45,15 @@ export interface CodeEditorProps {
   placeholder?: string;
   /** Invoked when the user presses Cmd/Ctrl+Enter inside the editor. */
   onRun?: () => void;
+  /** Adds suggestions from a caller-owned source such as database metadata. */
+  completionProvider?: CodeCompletionProvider;
+  /** Include the built-in language keywords and starter snippets. Default true. */
+  basicCompletions?: boolean;
+  /** Show the compact language/shortcut bar below the editor. Default true. */
+  showStatusBar?: boolean;
+  /** Per-use overrides layered on top of the shared editor defaults. */
+  options?: editor.IStandaloneEditorConstructionOptions;
+  ariaLabel?: string;
 }
 
 /** Imperative handle exposed to parents for reading/mutating editor content. */
@@ -85,8 +119,20 @@ const EDITOR_OPTIONS: editor.IStandaloneEditorConstructionOptions = {
   automaticLayout: true,
   tabSize: 2,
   fontSize: 13,
+  lineHeight: 20,
   lineNumbers: "on",
+  lineNumbersMinChars: 3,
   quickSuggestions: true,
+  suggest: { preview: true, showStatusBar: true },
+  tabCompletion: "on",
+  parameterHints: { enabled: true },
+  bracketPairColorization: { enabled: true },
+  guides: { bracketPairs: true, indentation: true },
+  padding: { top: 8, bottom: 8 },
+  renderLineHighlight: "line",
+  renderWhitespace: "selection",
+  smoothScrolling: true,
+  fixedOverflowWidgets: true,
   // Don't let commit characters (notably space) auto-accept the highlighted
   // suggestion — that duplicates the word and swallows the space. Tab/Enter
   // still accept.
@@ -96,41 +142,198 @@ const EDITOR_OPTIONS: editor.IStandaloneEditorConstructionOptions = {
   overviewRulerLanes: 0,
 };
 
+function completionKind(monaco: Monaco, kind: CodeCompletionKind | undefined): languages.CompletionItemKind {
+  switch (kind) {
+    case "function":
+      return monaco.languages.CompletionItemKind.Function;
+    case "snippet":
+      return monaco.languages.CompletionItemKind.Snippet;
+    case "variable":
+      return monaco.languages.CompletionItemKind.Variable;
+    case "field":
+    case "column":
+      return monaco.languages.CompletionItemKind.Field;
+    case "table":
+      return monaco.languages.CompletionItemKind.Struct;
+    case "text":
+      return monaco.languages.CompletionItemKind.Text;
+    case "keyword":
+    default:
+      return monaco.languages.CompletionItemKind.Keyword;
+  }
+}
+
+function toMonacoCompletion(monaco: Monaco, item: CodeCompletion, range: IRange): languages.CompletionItem {
+  return {
+    label: item.label,
+    insertText: item.insertText ?? item.label,
+    detail: item.detail,
+    documentation: item.documentation,
+    kind: completionKind(monaco, item.kind),
+    range,
+    sortText: item.sortText,
+    insertTextRules: item.snippet ? monaco.languages.CompletionItemInsertTextRule.InsertAsSnippet : undefined,
+  };
+}
+
+function useLatestRef<T>(value: T): MutableRefObject<T> {
+  const ref = useRef(value);
+  useEffect(() => {
+    ref.current = value;
+  }, [value]);
+  return ref;
+}
+
+interface CompletionRefs {
+  provider: MutableRefObject<CodeCompletionProvider | undefined>;
+  basic: MutableRefObject<boolean>;
+  taskType: MutableRefObject<string | undefined>;
+}
+
+function createCompletionProvider(
+  monaco: Monaco,
+  targetModel: editor.ITextModel,
+  language: CodeEditorLanguage,
+  refs: CompletionRefs,
+): languages.CompletionItemProvider {
+  return {
+    triggerCharacters: ["."],
+    async provideCompletionItems(model, position, _context, token) {
+      if (model !== targetModel) return { suggestions: [] };
+
+      const word = model.getWordUntilPosition(position);
+      const range: IRange = {
+        startLineNumber: position.lineNumber,
+        endLineNumber: position.lineNumber,
+        startColumn: word.startColumn,
+        endColumn: word.endColumn,
+      };
+      const base = refs.basic.current ? basicCompletionsFor(language) : [];
+      let contextual: readonly CodeCompletion[] = [];
+      const abortController = new AbortController();
+      const cancellation = token.onCancellationRequested(() => abortController.abort());
+      try {
+        contextual = refs.provider.current
+          ? await refs.provider.current({
+              language,
+              taskType: refs.taskType.current,
+              value: model.getValue(),
+              word: word.word,
+              position: { lineNumber: position.lineNumber, column: position.column },
+              signal: abortController.signal,
+            })
+          : [];
+      } catch {
+        // Remote/contextual suggestions are optional; preserve local hints.
+      } finally {
+        cancellation.dispose();
+      }
+
+      if (token.isCancellationRequested) return { suggestions: [] };
+      return { suggestions: mergeCompletions(base, contextual).map((item) => toMonacoCompletion(monaco, item, range)) };
+    },
+  };
+}
+
+interface CompletionRegistrationOptions {
+  editorRef: MutableRefObject<editor.IStandaloneCodeEditor | null>;
+  monacoRef: MutableRefObject<Monaco | null>;
+  editorReady: boolean;
+  language: CodeEditorLanguage;
+  refs: CompletionRefs;
+}
+
+function useCompletionRegistration({
+  editorRef,
+  monacoRef,
+  editorReady,
+  language,
+  refs,
+}: CompletionRegistrationOptions) {
+  useEffect(() => {
+    const monaco = monacoRef.current;
+    const targetModel = editorRef.current?.getModel();
+    if (!editorReady || !monaco || !targetModel || language === "plaintext") return;
+    const disposable = monaco.languages.registerCompletionItemProvider(
+      language,
+      createCompletionProvider(monaco, targetModel, language, refs),
+    );
+    return () => disposable.dispose();
+  }, [editorReady, editorRef, language, monacoRef, refs]);
+}
+
+function useCodeEditorHandle(
+  ref: ForwardedRef<CodeEditorHandle>,
+  editorRef: MutableRefObject<editor.IStandaloneCodeEditor | null>,
+) {
+  useImperativeHandle(ref, () => ({
+    getSelectedText: () => readSelection(editorRef.current),
+    insertText: (text) => insertAtCursor(editorRef.current, text),
+  }));
+}
+
+function useEditorHeightSync(
+  editorRef: MutableRefObject<editor.IStandaloneCodeEditor | null>,
+  notifyContentHeight: (height: number) => void,
+) {
+  useEffect(() => {
+    const ed = editorRef.current;
+    if (ed) notifyContentHeight(ed.getContentHeight());
+  }, [editorRef, notifyContentHeight]);
+}
+
 /**
  * Monaco-backed code editor that auto-grows with its content between
  * `minHeight` and `maxHeight`, then scrolls internally once content exceeds
  * the max. Matches the app's light Ant Design theme.
  */
 const CodeEditor = forwardRef<CodeEditorHandle, CodeEditorProps>(function CodeEditor(
-  { value, onChange, language, minHeight = 120, maxHeight, readOnly = false, placeholder, onRun },
+  {
+    value,
+    onChange,
+    language,
+    taskType,
+    minHeight = 120,
+    maxHeight,
+    readOnly = false,
+    placeholder,
+    onRun,
+    completionProvider,
+    basicCompletions = true,
+    showStatusBar = true,
+    options,
+    ariaLabel,
+  },
   ref,
 ) {
   const editorRef = useRef<editor.IStandaloneCodeEditor | null>(null);
+  const monacoRef = useRef<Monaco | null>(null);
+  const completionProviderRef = useLatestRef(completionProvider);
+  const basicCompletionsRef = useLatestRef(basicCompletions);
+  const taskTypeRef = useLatestRef(taskType);
+  const completionRefs = useMemo(
+    () => ({ provider: completionProviderRef, basic: basicCompletionsRef, taskType: taskTypeRef }),
+    [completionProviderRef, basicCompletionsRef, taskTypeRef],
+  );
+  const [editorReady, setEditorReady] = useState(false);
+  const resolvedLanguage = useMemo(() => language ?? languageForTaskType(taskType), [language, taskType]);
   // Keep the latest onRun in a ref so the Monaco keybinding (registered once on
   // mount) always calls the current handler without re-registering.
-  const onRunRef = useRef(onRun);
-  useEffect(() => {
-    onRunRef.current = onRun;
-  }, [onRun]);
+  const onRunRef = useLatestRef(onRun);
   // Guards the onChange handler while we push an *external* value via setValue —
   // Monaco fires onDidChangeModelContent synchronously from setValue, and
   // without this we'd echo the imported value straight back to the parent.
   const suppressChangeRef = useRef(false);
   const { height, notifyContentHeight } = useAutoGrowHeight(minHeight, maxHeight);
 
-  useImperativeHandle(ref, () => ({
-    getSelectedText: () => readSelection(editorRef.current),
-    insertText: (text) => insertAtCursor(editorRef.current, text),
-  }));
-
-  // Re-clamp when bounds change (e.g. window resized while editing).
-  useEffect(() => {
-    const ed = editorRef.current;
-    if (ed) notifyContentHeight(ed.getContentHeight());
-  }, [notifyContentHeight]);
+  useCodeEditorHandle(ref, editorRef);
+  useEditorHeightSync(editorRef, notifyContentHeight);
+  useCompletionRegistration({ editorRef, monacoRef, editorReady, language: resolvedLanguage, refs: completionRefs });
 
   const handleMount: OnMount = (ed, monaco) => {
     editorRef.current = ed;
+    monacoRef.current = monaco;
+    setEditorReady(true);
     notifyContentHeight(ed.getContentHeight());
     ed.onDidContentSizeChange(() => notifyContentHeight(ed.getContentHeight()));
     ed.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter, () => onRunRef.current?.());
@@ -155,42 +358,22 @@ const CodeEditor = forwardRef<CodeEditorHandle, CodeEditorProps>(function CodeEd
     onChange(v ?? "");
   };
 
-  const isEmpty = !value;
-
   return (
-    <div
-      style={{
-        position: "relative",
-        border: "1px solid var(--ant-color-border)",
-        borderRadius: "var(--ant-border-radius)",
-        overflow: "hidden",
-      }}
-    >
+    <div className="code-editor">
       <Editor
         height={height}
-        language={language}
+        language={resolvedLanguage}
         theme="vs"
         defaultValue={value}
         onChange={handleChange}
         onMount={handleMount}
-        options={{ ...EDITOR_OPTIONS, readOnly }}
+        options={{ ...EDITOR_OPTIONS, ...options, readOnly, ariaLabel }}
       />
-      {isEmpty && placeholder ? (
-        <div
-          style={{
-            position: "absolute",
-            top: 0,
-            left: 62,
-            padding: "1px 0",
-            fontSize: 13,
-            lineHeight: "19px",
-            fontFamily: "var(--ant-font-family-code)",
-            color: "var(--ant-color-text-quaternary)",
-            pointerEvents: "none",
-            whiteSpace: "pre",
-          }}
-        >
-          {placeholder}
+      {!value && placeholder ? <div className="code-editor__placeholder">{placeholder}</div> : null}
+      {showStatusBar ? (
+        <div className="code-editor__status" aria-hidden="true">
+          <span className="code-editor__language">{languageLabel(resolvedLanguage)}</span>
+          {!readOnly && (onRun ? <span>Ctrl/⌘ Enter</span> : <span>Ctrl/⌘ Space</span>)}
         </div>
       ) : null}
     </div>

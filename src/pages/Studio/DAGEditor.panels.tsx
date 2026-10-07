@@ -13,13 +13,13 @@ import type { JobType } from "@/constants/enums";
 function CodeField({
   value,
   onChange,
-  language,
+  taskType,
 }: {
   value?: string;
   onChange?: (v: string) => void;
-  language: "sql" | "shell";
+  taskType: JobType;
 }) {
-  return <CodeEditor value={value ?? ""} onChange={onChange ?? (() => {})} language={language} minHeight={160} />;
+  return <CodeEditor value={value ?? ""} onChange={onChange ?? (() => {})} taskType={taskType} minHeight={160} />;
 }
 
 interface DAGToolbarProps {
@@ -115,7 +115,7 @@ function NodeConfigBody({ node }: { node: Node }) {
       <def.ConfigFields />
       {def.needsSubject && (
         <Form.Item name="subject" label={t("taskForm.subject")} rules={[{ required: true }]}>
-          <CodeField language={def.subjectLanguage ?? "sql"} />
+          <CodeField taskType={def.type} />
         </Form.Item>
       )}
     </>

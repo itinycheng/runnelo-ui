@@ -20,13 +20,13 @@ import { FIELD_COL, FULL_COL } from "./tasks/formLayout";
 function CodeField({
   value,
   onChange,
-  language,
+  taskType,
 }: {
   value?: string;
   onChange?: (v: string) => void;
-  language: "sql" | "shell";
+  taskType: JobType;
 }) {
-  return <CodeEditor value={value ?? ""} onChange={onChange ?? (() => {})} language={language} minHeight={200} />;
+  return <CodeEditor value={value ?? ""} onChange={onChange ?? (() => {})} taskType={taskType} minHeight={200} />;
 }
 
 function resetForType(form: FormInstance, nextType: JobType) {
@@ -134,7 +134,7 @@ function TaskFormBody({
       {def?.needsSubject && (
         <Col {...FULL_COL}>
           <Form.Item name="subject" label={t("taskForm.subject")} rules={[{ required: true }]}>
-            <CodeField language={def.subjectLanguage ?? "sql"} />
+            <CodeField taskType={def.type} />
           </Form.Item>
         </Col>
       )}

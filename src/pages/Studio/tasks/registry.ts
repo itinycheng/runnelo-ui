@@ -17,7 +17,6 @@ export interface TaskTypeDef {
   labelKey: string;
   ConfigFields: React.FC;
   needsSubject: boolean;
-  subjectLanguage?: "sql" | "shell";
 }
 
 export const TASK_TYPE_REGISTRY: Record<JobType, TaskTypeDef> = {
@@ -26,7 +25,6 @@ export const TASK_TYPE_REGISTRY: Record<JobType, TaskTypeDef> = {
     labelKey: "enums.JobType.FLINK_SQL",
     ConfigFields: FlinkSqlConfigFields,
     needsSubject: true,
-    subjectLanguage: "sql",
   },
   FLINK_JAR: {
     type: "FLINK_JAR",
@@ -45,28 +43,24 @@ export const TASK_TYPE_REGISTRY: Record<JobType, TaskTypeDef> = {
     labelKey: "enums.JobType.CLICKHOUSE_SQL",
     ConfigFields: SqlConfigFields,
     needsSubject: true,
-    subjectLanguage: "sql",
   },
   MYSQL_SQL: {
     type: "MYSQL_SQL",
     labelKey: "enums.JobType.MYSQL_SQL",
     ConfigFields: SqlConfigFields,
     needsSubject: true,
-    subjectLanguage: "sql",
   },
   HIVE_SQL: {
     type: "HIVE_SQL",
     labelKey: "enums.JobType.HIVE_SQL",
     ConfigFields: SqlConfigFields,
     needsSubject: true,
-    subjectLanguage: "sql",
   },
   SHELL: {
     type: "SHELL",
     labelKey: "enums.JobType.SHELL",
     ConfigFields: ShellConfigFields,
     needsSubject: true,
-    subjectLanguage: "shell",
   },
   CONDITION: {
     type: "CONDITION",
