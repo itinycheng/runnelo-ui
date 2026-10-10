@@ -11,8 +11,10 @@
  * Imported once for its side effects by the shared CodeEditor component.
  */
 import * as monaco from "monaco-editor/editor/editor.api";
+import "monaco-editor/editor/contrib/multicursor/browser/multicursor";
 import "monaco-editor/editor/contrib/snippet/browser/snippetController2";
 import "monaco-editor/editor/contrib/suggest/browser/suggestController";
+import "monaco-editor/editor/contrib/wordHighlighter/browser/wordHighlighter";
 import "monaco-editor/languages/definitions/java/register";
 import "monaco-editor/languages/definitions/python/register";
 import "monaco-editor/languages/definitions/sql/register";

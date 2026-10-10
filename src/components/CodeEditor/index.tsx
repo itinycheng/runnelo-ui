@@ -131,6 +131,9 @@ const EDITOR_OPTIONS: editor.IStandaloneEditorConstructionOptions = {
   padding: { top: 8, bottom: 8 },
   renderLineHighlight: "line",
   renderWhitespace: "selection",
+  occurrencesHighlight: "singleFile",
+  selectionHighlight: true,
+  selectionHighlightMultiline: false,
   smoothScrolling: true,
   fixedOverflowWidgets: true,
   // Don't let commit characters (notably space) auto-accept the highlighted
