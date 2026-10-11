@@ -7,28 +7,3 @@
 *:hover {
   scrollbar-color: var(--ant-color-border) transparent;
 }
-
-/* Error feedback — compact, contextual, and aligned with dense scheduler surfaces. */
-.app-error-notification .ant-notification-notice-with-icon .ant-notification-notice-title,
-.app-error-notification .ant-notification-notice-with-icon .ant-notification-notice-description,
-.app-error-notification .ant-notification-notice-with-icon .ant-notification-notice-actions {
-  margin-inline-start: 28px;
-}
-
-.app-error-notification__title-row {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 12px;
-}
-
-.app-error-notification__time {
-  flex: none;
-  font-size: 12px;
-  font-weight: 400;
-}
-
-.app-error-notification__action {
-  height: auto;
-  padding: 0;
-}

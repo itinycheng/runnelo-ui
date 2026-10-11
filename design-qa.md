@@ -41,6 +41,10 @@
 - P2: Login network failures also invoked the page's legacy static message, creating a second presentation channel and an Ant Design context warning.
 - Fix: Login now leaves transport failures to the global notification while keeping invalid-credential 401 messages local through the contextual App message API.
 - Post-fix evidence: clicking Login with the API unavailable left one notification in the DOM and produced no new warning log.
+- P2: The live timestamp originally shared the title row and reduced the width available to long error titles.
+- Fix: The title row now contains only the title and close control; the timestamp moved to the right side of the bottom action row.
+- Post-fix evidence: browser measurement confirmed the timestamp is inside the action container while the title contains no timestamp text.
+- Follow-up: once the timestamp moved out of the title row, the custom close-button offset and size were removed so Ant Design's default close control owns its placement and interaction states.
 - P2: The notification initially remained visible over the details drawer and obscured the drawer header/content.
 - Fix: Opening `View details` now dismisses that notification before opening the drawer.
 - Post-fix evidence: browser capture showed the drawer unobstructed and the notification count at zero.

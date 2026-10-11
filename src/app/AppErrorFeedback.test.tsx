@@ -33,22 +33,41 @@ describe("AppErrorFeedbackHost presentation", () => {
       });
     });
 
-    expect(await screen.findByText("Workflow save failed")).toBeVisible();
-    expect(screen.getByText("Just now")).toBeVisible();
-    expect(screen.getByTestId("app-error-notification")).toHaveClass("app-error-notification");
-    expect(document.querySelector(".app-error-notification__title")).toHaveStyle({ paddingInlineEnd: "32px" });
-    expect(document.querySelector(".app-error-notification__actions")).toHaveStyle({
+    const title = await screen.findByText("Workflow save failed");
+    const description = screen.getByText("Your edits remain on this page.");
+    const viewDetailsButton = screen.getByRole("button", { name: "View details" });
+    const timestamp = screen.getByText("Just now");
+    const actionContent = timestamp.parentElement;
+    const actions = actionContent?.parentElement;
+    expect(title).toBeVisible();
+    expect(timestamp).toBeVisible();
+    expect(actionContent).toContainElement(viewDetailsButton);
+    expect(title).not.toHaveTextContent("Just now");
+    expect(title).toHaveStyle({
+      marginInlineStart: "28px",
+      paddingInlineEnd: "32px",
+    });
+    expect(description).toHaveStyle({ marginInlineStart: "28px" });
+    expect(actions).toHaveStyle({
       display: "flex",
       float: "none",
       justifyContent: "flex-start",
       marginInlineStart: "28px",
       width: "auto",
     });
-    await userEvent.click(screen.getByRole("button", { name: "View details" }));
+    expect(timestamp).toHaveStyle({ flex: "none", fontSize: "12px", fontWeight: "400" });
+    expect(viewDetailsButton).toHaveStyle({ height: "auto", padding: "0px" });
+    await userEvent.click(viewDetailsButton);
     expect(await screen.findByText("Error details")).toBeVisible();
     expect(screen.getByText("/jobFlow/update")).toBeVisible();
     expect(screen.queryByText(/token=secret/)).not.toBeInTheDocument();
     expect(screen.getByText("request-123")).toBeVisible();
+
+    const writeText = vi.fn().mockResolvedValue(undefined);
+    Object.defineProperty(navigator, "clipboard", { configurable: true, value: { writeText } });
+    await userEvent.click(screen.getByRole("button", { name: /Copy details$/ }));
+    expect(writeText).toHaveBeenCalledWith(expect.stringContaining("Request path: /jobFlow/update"));
+    expect(writeText).not.toHaveBeenCalledWith(expect.stringContaining("token=secret"));
   });
 });
 
