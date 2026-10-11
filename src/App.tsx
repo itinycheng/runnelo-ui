@@ -11,6 +11,7 @@ import { useWorkspaceStore } from "@/stores/workspaceStore";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClient } from "@/app/queryClient";
 import { AppErrorBoundary } from "@/app/AppErrorBoundary";
+import { AppErrorFeedbackHost } from "@/app/AppErrorFeedback";
 import { appPalettes, appThemes } from "@/theme";
 import { useThemeStore } from "@/stores/themeStore";
 
@@ -55,7 +56,17 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <ConfigProvider locale={antLocales[lang]} theme={appThemes[themePreset]}>
         <ProConfigProvider intl={proIntls[lang]}>
-          <AntApp>
+          <AntApp
+            notification={{
+              placement: "topRight",
+              maxCount: 3,
+              stack: { threshold: 3 },
+              duration: 8,
+              showProgress: true,
+              pauseOnHover: true,
+            }}
+          >
+            <AppErrorFeedbackHost />
             <AppErrorBoundary>
               <AppRouter />
             </AppErrorBoundary>

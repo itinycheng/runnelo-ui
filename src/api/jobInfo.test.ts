@@ -1,8 +1,10 @@
 import { describe, it, expect, beforeAll, afterAll, vi } from "vitest";
 import { setupServer } from "msw/node";
-import { message } from "antd";
 import { workflowHandlers } from "@/mocks/handlers/job";
+import { reportAppError } from "@/app/errorFeedback";
 import { createJobInfo, getJobInfo, updateJobInfo } from "./job";
+
+vi.mock("@/app/errorFeedback", () => ({ reportAppError: vi.fn() }));
 
 const server = setupServer(...workflowHandlers);
 beforeAll(() => server.listen({ onUnhandledRequest: "error" }));
@@ -38,11 +40,9 @@ describe("jobInfo API + mock", () => {
   });
 
   it("rejects non-numeric ids like the legacy Long path variable", async () => {
-    // Ant Design's static message API mounts a React root asynchronously. Mock
-    // it here so the scheduler cannot outlive Vitest's jsdom environment.
-    const messageSpy = vi.spyOn(message, "error").mockImplementation(() => ({}) as never);
     await expect(getJobInfo("task-abc123")).rejects.toThrow("任务 ID 必须是数字");
-    expect(messageSpy).toHaveBeenCalledWith("任务 ID 必须是数字");
-    messageSpy.mockRestore();
+    expect(reportAppError).toHaveBeenCalledWith(
+      expect.objectContaining({ description: "任务 ID 必须是数字", code: 1001 }),
+    );
   });
 });

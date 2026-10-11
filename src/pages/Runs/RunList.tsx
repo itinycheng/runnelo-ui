@@ -1,5 +1,5 @@
 import { useState, useCallback, useMemo } from "react";
-import { Button, Popconfirm, Space, Tag, message } from "antd";
+import { Alert, Button, Popconfirm, Space, Tag, message } from "antd";
 import { useTranslation } from "react-i18next";
 import type { TFunction } from "i18next";
 import { useSearchParams } from "react-router-dom";
@@ -14,6 +14,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useWorkspaceStore } from "@/stores/workspaceStore";
 import { enumColor } from "@/utils/statusColor";
 import { queryKeys } from "@/api/queryKeys";
+import PageLoadError from "@/components/PageLoadError";
 
 type RunType = JobType | JobFlowType;
 
@@ -63,11 +64,53 @@ function useRunsPage(initialStatus?: string, initialType?: string) {
   });
   const query = useQuery({
     queryKey: queryKeys.runs.list(workspaceId, params),
-    queryFn: () => getFlowRuns(params),
+    // This page owns its initial-load failure state, so suppress the global
+    // notification and keep the error next to the table it affects.
+    queryFn: () => getFlowRuns(params, { suppressErrorToast: true }),
     enabled: workspaceId != null,
     refetchInterval: (state) => (state.state.data?.data.some((run) => execIsRunning(run.status)) ? 5_000 : 30_000),
   });
   return { params, setParams, query };
+}
+
+type RunsQuery = ReturnType<typeof useRunsPage>["query"];
+
+function isInitialLoadFailed(query: RunsQuery): boolean {
+  return query.isError && query.data == null;
+}
+
+function RunsRefreshError({ query }: { query: RunsQuery }) {
+  const { t } = useTranslation();
+  if (!query.isRefetchError || query.data == null) return null;
+  return (
+    <Alert
+      type="error"
+      showIcon
+      message={t("runs.refreshError")}
+      description={t("runs.refreshErrorDescription")}
+      action={
+        <Button size="small" onClick={() => void query.refetch()}>
+          {t("common.retry")}
+        </Button>
+      }
+      style={{ marginBottom: 12 }}
+      data-testid="runs-refresh-error"
+    />
+  );
+}
+
+function runsTableLocale(query: RunsQuery, t: TFunction) {
+  if (!isInitialLoadFailed(query)) return undefined;
+  return {
+    emptyText: (
+      <PageLoadError
+        title={t("runs.listLoadError")}
+        description={t("runs.listLoadErrorDescription")}
+        retryLabel={t("common.retry")}
+        onRetry={() => void query.refetch()}
+      />
+    ),
+  };
 }
 
 function useRunColumns(openDetail: (id: string) => void, onKill: (id: string) => void) {
@@ -144,12 +187,14 @@ export default function RunList() {
 
   return (
     <div data-testid="run-list">
+      <RunsRefreshError query={runs.query} />
       <ProTable<FlowRun>
         headerTitle={t("runs.title")}
         rowKey="id"
         columns={columns}
         dataSource={runs.query.data?.data ?? []}
-        loading={runs.query.isFetching}
+        loading={runs.query.isFetching && !isInitialLoadFailed(runs.query)}
+        locale={runsTableLocale(runs.query, t)}
         options={{ reload: false, density: false, setting: false }}
         form={{
           initialValues: {

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
-import { Card, Flex, Form, Input, Button, Typography, message, Spin } from "antd";
+import { App as AntApp, Card, Flex, Form, Input, Button, Typography, Spin } from "antd";
 import { LockOutlined, UserOutlined } from "@ant-design/icons";
 import { useTranslation } from "react-i18next";
 import { useAuthStore } from "@/stores/authStore";
@@ -9,6 +9,7 @@ import { STORAGE_KEYS } from "@/constants/storage";
 import BrandLogo from "@/components/BrandLogo";
 import { useThemeStore } from "@/stores/themeStore";
 import { addReauthentication, readSsoCallback, safeReturnTo } from "./sso";
+import { localLoginErrorMessage } from "./loginError";
 
 interface LoginFormValues {
   username: string;
@@ -125,6 +126,7 @@ function useLoginBootstrap() {
 
 export default function Login() {
   const [form] = Form.useForm<LoginFormValues>();
+  const { message } = AntApp.useApp();
   const { t } = useTranslation();
   const themePreset = useThemeStore((state) => state.preset);
   const { loading, setLoading, configLoading, authType, ssoLoginUrl, login, navigate, returnTo } = useLoginBootstrap();
@@ -140,8 +142,8 @@ export default function Login() {
       message.success(t("login.loginSuccess"));
       await navigate(returnTo, { replace: true });
     } catch (error: unknown) {
-      const errorMessage = error instanceof Error ? error.message : t("login.loginFailed");
-      message.error(errorMessage);
+      const errorMessage = localLoginErrorMessage(error, t("login.loginFailed"));
+      if (errorMessage) void message.error(errorMessage);
       form.setFieldsValue({ password: "" });
     } finally {
       setLoading(false);

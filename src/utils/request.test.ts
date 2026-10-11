@@ -1,9 +1,11 @@
-import { describe, it, expect, beforeAll, afterAll, vi } from "vitest";
+import { describe, it, expect, beforeAll, afterAll, afterEach, vi } from "vitest";
 import { setupServer } from "msw/node";
 import { http as mswHttp, HttpResponse } from "msw";
-import { message } from "antd";
 import { unwrapEnvelope, http } from "./request";
 import { STORAGE_KEYS } from "@/constants/storage";
+import { reportAppError } from "@/app/errorFeedback";
+
+vi.mock("@/app/errorFeedback", () => ({ reportAppError: vi.fn() }));
 
 describe("unwrapEnvelope", () => {
   it("unwraps a success envelope to its data", () => {
@@ -29,6 +31,9 @@ describe("unwrapEnvelope", () => {
 const server = setupServer(
   mswHttp.get("/api/ok", () => HttpResponse.json({ code: 0, desc: "success", data: { v: 1 } })),
   mswHttp.get("/api/biz", () => HttpResponse.json({ code: 1, desc: "boom", data: null })),
+  mswHttp.get("/api/network-a", () => HttpResponse.error()),
+  mswHttp.get("/api/network-b", () => HttpResponse.error()),
+  mswHttp.get("/api/unauthorized", () => HttpResponse.json({ message: "unauthorized" }, { status: 401 })),
   mswHttp.get("/api/headers", ({ request }) =>
     HttpResponse.json({
       code: 0,
@@ -39,22 +44,42 @@ const server = setupServer(
 );
 beforeAll(() => server.listen({ onUnhandledRequest: "error" }));
 afterAll(() => server.close());
+afterEach(() => {
+  vi.mocked(reportAppError).mockClear();
+  window.history.replaceState(null, "", "/");
+});
 
 describe("http interceptor envelope handling", () => {
   it("resolves code:0 to data", async () => {
     await expect(http.get("/ok")).resolves.toEqual({ v: 1 });
   });
-  it("rejects code!==0 AND toasts the desc", async () => {
-    const spy = vi.spyOn(message, "error").mockImplementation(() => ({}) as never);
+  it("rejects code!==0 and publishes a detailed app error", async () => {
     await expect(http.get("/biz")).rejects.toThrow("boom");
-    expect(spy).toHaveBeenCalledWith("boom");
-    spy.mockRestore();
+    expect(reportAppError).toHaveBeenCalledWith(
+      expect.objectContaining({
+        key: expect.stringContaining("business"),
+        description: "boom",
+        code: 1,
+        method: "get",
+        url: "/biz",
+      }),
+    );
   });
-  it("suppressErrorToast rejects WITHOUT toasting", async () => {
-    const spy = vi.spyOn(message, "error").mockImplementation(() => ({}) as never);
+  it("suppressErrorToast rejects without publishing global feedback", async () => {
     await expect(http.get("/biz", { suppressErrorToast: true })).rejects.toThrow("boom");
-    expect(spy).not.toHaveBeenCalled();
-    spy.mockRestore();
+    expect(reportAppError).not.toHaveBeenCalled();
+  });
+  it("deduplicates network failures from different endpoints into one notice", async () => {
+    await Promise.allSettled([http.get("/network-a"), http.get("/network-b")]);
+
+    const keys = vi.mocked(reportAppError).mock.calls.map(([notice]) => notice.key);
+    expect(keys).toEqual(["network", "network"]);
+  });
+  it("does not report session expiry while already on the hash login route", async () => {
+    window.history.replaceState(null, "", "/#/login");
+
+    await expect(http.get("/unauthorized")).rejects.toThrow();
+    expect(reportAppError).not.toHaveBeenCalled();
   });
   it("uses the legacy backend authentication and workspace headers", async () => {
     localStorage.setItem(STORAGE_KEYS.token, "token-1");

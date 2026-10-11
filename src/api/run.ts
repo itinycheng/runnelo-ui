@@ -12,9 +12,14 @@ import { formatLegacyDateTime } from "@/api/legacy/date";
 
 const LEGACY_CLIENT_FILTER_LIMIT = 1_000;
 
-function getLegacyFlowRunPage(params: FlowRunListParams, status = params.status) {
+interface FlowRunRequestOptions {
+  suppressErrorToast?: boolean;
+}
+
+function getLegacyFlowRunPage(params: FlowRunListParams, status = params.status, options?: FlowRunRequestOptions) {
   const needsClientFiltering = Boolean(params.flowId || params.type);
   return http.get<IPage<LegacyFlowRunDto>>("/jobFlowRun/page", {
+    suppressErrorToast: options?.suppressErrorToast,
     params: {
       ...toPageParams({
         page: needsClientFiltering ? 1 : params.page,
@@ -36,27 +41,34 @@ function clientFilter(items: FlowRun[], params: FlowRunListParams): FlowRun[] {
 }
 
 /** Unified list of top-level runs (single-task + composite flow) from `/jobFlowRun/page`. */
-export function getFlowRuns(params: FlowRunListParams): Promise<PaginatedResponse<FlowRun>> {
+export function getFlowRuns(
+  params: FlowRunListParams,
+  options?: FlowRunRequestOptions,
+): Promise<PaginatedResponse<FlowRun>> {
   const statuses = params.statuses?.length ? params.statuses : undefined;
   if (statuses && statuses.length > 1) {
     // The legacy controller accepts only one `status`. Fan out the small
     // semantic buckets used by the dashboard, then merge them for the UI.
-    return Promise.all(statuses.map((status) => getLegacyFlowRunPage({ ...params, page: 1 }, status))).then((pages) => {
-      const all = clientFilter(
-        pages.flatMap((page) => page.records.map(adaptFlowRun)).sort((a, b) => b.startTime.localeCompare(a.startTime)),
-        params,
-      );
-      const start = (params.page - 1) * params.pageSize;
-      return {
-        data: all.slice(start, start + params.pageSize),
-        total: all.length,
-        page: params.page,
-        pageSize: params.pageSize,
-      };
-    });
+    return Promise.all(statuses.map((status) => getLegacyFlowRunPage({ ...params, page: 1 }, status, options))).then(
+      (pages) => {
+        const all = clientFilter(
+          pages
+            .flatMap((page) => page.records.map(adaptFlowRun))
+            .sort((a, b) => b.startTime.localeCompare(a.startTime)),
+          params,
+        );
+        const start = (params.page - 1) * params.pageSize;
+        return {
+          data: all.slice(start, start + params.pageSize),
+          total: all.length,
+          page: params.page,
+          pageSize: params.pageSize,
+        };
+      },
+    );
   }
 
-  return getLegacyFlowRunPage(params, statuses?.[0]).then((page) => {
+  return getLegacyFlowRunPage(params, statuses?.[0], options).then((page) => {
     const mapped = clientFilter(page.records.map(adaptFlowRun), params);
     if (params.flowId || params.type) {
       const start = (params.page - 1) * params.pageSize;

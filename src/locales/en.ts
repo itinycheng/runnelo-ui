@@ -81,6 +81,37 @@ const en = {
     networkError: "Network error, please check your connection",
   },
 
+  errorFeedback: {
+    operationFailed: "Operation failed",
+    viewDetails: "View details",
+    detailsTitle: "Error details",
+    errorTitle: "Error",
+    httpStatus: "HTTP status",
+    businessCode: "Business error code",
+    requestMethod: "Request method",
+    requestPath: "Request path",
+    requestId: "Request ID",
+    traceId: "Trace ID",
+    occurredAt: "Occurred at",
+    copyDetails: "Copy details",
+    copied: "Error details copied",
+    copyFailed: "Copy failed, please copy the details manually",
+    justNow: "Just now",
+    secondsAgo: "{{count}}s ago",
+    minutesAgo: "{{count}}m ago",
+    hoursAgo: "{{count}}h ago",
+    daysAgo: "{{count}}d ago",
+    requestDescription: "The request was not completed. Check the input and try again.",
+    serverDescription:
+      "The server could not complete the request. Try again later. If the problem continues, copy the error details and contact an administrator.",
+    forbiddenDescription: "Your account does not have permission to perform this operation.",
+    notFoundDescription: "The resource may have been deleted or moved. Refresh the page and try again.",
+    authExpiredDescription: "Your session has expired. Sign in again to continue.",
+    timeoutDescription:
+      "The result is unknown. Refresh the current state before retrying to avoid a duplicate request.",
+    networkDescription: "The browser did not receive a server response. Check your connection or try again later.",
+  },
+
   app: {
     title: "{{appName}}",
     footer: "{{appName}} ©{{year}} Copyright | v{{version}}",
@@ -633,6 +664,10 @@ const en = {
     jobId: "Job ID",
     logLoadFailed: "Failed to load log",
     noNodeData: "No node data",
+    listLoadError: "Failed to load runs",
+    listLoadErrorDescription: "Run data is temporarily unavailable. Try again shortly.",
+    refreshError: "Runs data may be out of date",
+    refreshErrorDescription: "The latest refresh failed. Existing rows are still shown.",
   },
 
   definitions: {
