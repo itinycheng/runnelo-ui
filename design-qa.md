@@ -62,4 +62,48 @@
 
 - P3: Add a product-level retry callback only for operations whose idempotency is known; global request errors intentionally expose details but do not blindly replay mutations.
 
+## Login Background QA
+
+- Source visual truth: `/Users/tiger/.codex/visualizations/2026/10/10/01a1252c-d994-7eb0-b34a-42653c9baadb/runnelo-login-lifecycle-dependency.html`, `Expanded Task` variant.
+- Implementation: `http://127.0.0.1:4173/#/login`.
+- Browser-rendered implementation evidence: Codex in-app browser captures at 1280 × 720, 390 × 844, and 2560 × 1080 CSS px, device scale 1. The browser captures are inline and do not expose filesystem screenshot paths.
+- State: Coral light theme, local login form, dependency background visible, no notification overlay.
+
+### Full-view comparison
+
+- The production page preserves the centered 400 px login card and clean central reading zone.
+- One expanded `aggregate_daily` task shows `CREATED → SUBMITTED → WAITING → RUNNING`, with branches to `SUCCESS`, `FAILURE`, and `KILLED`.
+- Six peripheral task nodes are connected by seven dependency edges, producing one coherent topology instead of unrelated line fragments.
+- Background contrast remains subordinate to the form while semantic status dots remain readable.
+
+### Focused region comparison
+
+- The first browser capture showed the expanded lifecycle panel touching the top crop at the 1280 × 720 viewport.
+- Fix: moved the lifecycle panel and its transition nodes down by 30 SVG units.
+- Post-fix capture shows clear top spacing and no collision with the login card.
+- A later responsive pass found the desktop `slice` scaling cropped task nodes on portrait screens and lifecycle states on ultrawide screens.
+- Fix: desktop now uses `meet`; mobile uses a dedicated 390 × 844 topology with the complete seven-state lifecycle and four connected tasks.
+- Post-fix evidence: the 390 × 844 capture shows all lifecycle states plus `extract`, `publish`, `quality`, and `notify`; the 2560 × 1080 DOM measurement confirms right-side task bounds remain within the viewport.
+- The mobile terminal-state routes were refined into one shared trunk with separate top-edge drops for `SUCCESS`, `FAILURE`, and `KILLED`, avoiding line crossings through state nodes.
+- A final implementation refactor moved topology styles, breakpoint selection, theme-token mapping, and SVG animation into typed TS modules and removed `Login.css`; a post-refactor 1280 × 720 capture showed no visual drift.
+
+### Required fidelity surfaces
+
+- Fonts and typography: application and monospace theme tokens are reused; labels remain secondary to login content.
+- Spacing and layout rhythm: card proportions are unchanged; the lifecycle panel, side tasks, and lower tasks maintain an even perimeter around the clear center.
+- Colors and tokens: all surfaces, lines, status colors, and the active Coral route use Ant Design theme variables and work with the existing theme system.
+- Image and icon fidelity: the topology is a native data diagram rather than a decorative raster asset; existing Ant Design form icons and the Runnelo wordmark remain unchanged.
+- Copy and content: task names and execution statuses use scheduler vocabulary already present in the product.
+
+### Interaction and accessibility
+
+- The background is pointer-transparent and `aria-hidden`, so it does not enter the accessibility tree or block the form.
+- Active-path and running-state SVG animation is omitted when TS detects `prefers-reduced-motion`.
+- Mobile styling switches to a purpose-built compact topology, reduces opacity, and removes only the nonessential lifecycle caption.
+- Browser console inspection showed no errors or warnings in the final visual state.
+
+### Findings
+
+- No actionable P0/P1/P2 differences remain.
+
 final result: passed

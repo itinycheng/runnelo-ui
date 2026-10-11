@@ -10,6 +10,8 @@ import BrandLogo from "@/components/BrandLogo";
 import { useThemeStore } from "@/stores/themeStore";
 import { addReauthentication, readSsoCallback, safeReturnTo } from "./sso";
 import { localLoginErrorMessage } from "./loginError";
+import LoginBackground from "./LoginBackground";
+import { loginCardStyle, loginPageStyle } from "./Login.styles";
 
 interface LoginFormValues {
   username: string;
@@ -151,8 +153,9 @@ export default function Login() {
   };
 
   return (
-    <Flex justify="center" align="center" style={{ minHeight: "100vh" }}>
-      <Card style={{ width: 400 }}>
+    <Flex justify="center" align="center" style={loginPageStyle}>
+      <LoginBackground />
+      <Card style={loginCardStyle}>
         <BrandLogo
           preset={themePreset}
           height={38}
