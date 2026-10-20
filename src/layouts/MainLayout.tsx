@@ -34,6 +34,7 @@ import { getRoutePermission } from "@/router/routes";
 import { useWorkspaceStore } from "@/stores/workspaceStore";
 import { useThemeStore } from "@/stores/themeStore";
 import { APP_HEADER_HEIGHT, appLayoutTokens, type ThemePresetKey } from "@/theme";
+import { EnvironmentHeader, EnvironmentWatermark } from "@/components/EnvironmentIdentity";
 
 type TFunc = (key: string) => string;
 
@@ -120,6 +121,7 @@ function renderHeaderTitle(themePreset: ThemePresetKey) {
   return (
     <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
       <BrandLogo preset={themePreset} height={26} />
+      <EnvironmentHeader />
       {/* Workspace scopes everything below it — a "brand / workspace" breadcrumb reads it as context. */}
       <WorkspaceSwitcher breadcrumb />
       {/* Trailing slash closes the brand+workspace context cluster off from the nav menu. */}
@@ -212,6 +214,7 @@ export default function MainLayout() {
           }}
         >
           <Outlet key={currentWorkspaceId ?? "no-workspace"} />
+          <EnvironmentWatermark />
         </div>
       </ProLayout>
     </div>

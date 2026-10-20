@@ -12,6 +12,7 @@ import { addReauthentication, readSsoCallback, safeReturnTo } from "./sso";
 import { localLoginErrorMessage } from "./loginError";
 import LoginBackground from "./LoginBackground";
 import { loginCardStyle, loginPageStyle } from "./Login.styles";
+import { EnvironmentHeader, EnvironmentWatermark } from "@/components/EnvironmentIdentity";
 
 interface LoginFormValues {
   username: string;
@@ -155,7 +156,11 @@ export default function Login() {
   return (
     <Flex justify="center" align="center" style={loginPageStyle}>
       <LoginBackground />
+      <EnvironmentWatermark login />
       <Card style={loginCardStyle}>
+        <div className="environment-login-header">
+          <EnvironmentHeader />
+        </div>
         <BrandLogo
           preset={themePreset}
           height={38}

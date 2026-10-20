@@ -47,6 +47,10 @@ const en = {
     language: "Language",
   },
 
+  environment: {
+    unknown: "Environment unknown",
+  },
+
   menu: {
     dashboard: "Dashboard",
     jobs: "Jobs",

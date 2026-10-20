@@ -47,6 +47,10 @@ const zh = {
     language: "语言",
   },
 
+  environment: {
+    unknown: "环境未确认",
+  },
+
   menu: {
     dashboard: "仪表盘",
     jobs: "作业",

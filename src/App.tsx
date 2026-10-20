@@ -14,9 +14,18 @@ import { AppErrorBoundary } from "@/app/AppErrorBoundary";
 import { AppErrorFeedbackHost } from "@/app/AppErrorFeedback";
 import { appPalettes, appThemes } from "@/theme";
 import { useThemeStore } from "@/stores/themeStore";
+import { EnvironmentIdentityProvider } from "@/components/EnvironmentIdentity";
 
 const antLocales = { en: enUS, zh: zhCN };
 const proIntls = { en: enUSIntl, zh: zhCNIntl };
+
+function EnvironmentAwareRouter() {
+  return (
+    <EnvironmentIdentityProvider>
+      <AppRouter />
+    </EnvironmentIdentityProvider>
+  );
+}
 
 function App() {
   const { i18n } = useTranslation();
@@ -68,7 +77,7 @@ function App() {
           >
             <AppErrorFeedbackHost />
             <AppErrorBoundary>
-              <AppRouter />
+              <EnvironmentAwareRouter />
             </AppErrorBoundary>
           </AntApp>
         </ProConfigProvider>

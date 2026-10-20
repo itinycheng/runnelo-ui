@@ -69,3 +69,16 @@ src/
 
 The current backend compatibility contract is documented in
 [`docs/backend-compatibility.md`](docs/backend-compatibility.md).
+
+## Environment identity
+
+The UI reads optional display settings from the backend's public
+`GET /ui/environment` endpoint when it starts. Each deployment can supply any
+environment label and independently enable a header marker or a watermark.
+When neither is configured, no environment marker is shown. The backend's
+`runnelo.ui.environment` properties control these settings at runtime, so a
+frontend rebuild is not needed for each environment.
+
+For a local visual preview in mock mode, copy the `VITE_MOCK_ENV_*` example
+values from `.env.example` into `.env.local`, set a label, and enable `HEADER`,
+`WATERMARK`, or both. Restart `npm run dev` after changing `.env.local`.

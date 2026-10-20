@@ -12,6 +12,11 @@ interface ImportMetaEnv {
   readonly VITE_API_MODE: "mock" | "proxy" | "direct";
   /** Backend origin to proxy API calls to when VITE_API_MODE=proxy (dev only). */
   readonly VITE_API_PROXY: string;
+  /** Local mock preview only; not read by production builds. */
+  readonly VITE_MOCK_ENV_LABEL?: string;
+  readonly VITE_MOCK_ENV_COLOR?: string;
+  readonly VITE_MOCK_ENV_HEADER?: string;
+  readonly VITE_MOCK_ENV_WATERMARK?: string;
 }
 
 interface ImportMeta {

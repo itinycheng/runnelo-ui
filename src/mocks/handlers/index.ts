@@ -11,9 +11,11 @@ import { queryHandlers } from "./query";
 import { workspaceHandlers } from "./workspace";
 import { jobFlowHandlers } from "./jobFlow";
 import { pickerHandlers } from "./picker";
+import { environmentHandlers } from "./environment";
 
 export const handlers: RequestHandler[] = [
   ...authHandlers,
+  ...environmentHandlers,
   ...dashboardHandlers,
   ...workflowHandlers,
   ...resourceHandlers,
