@@ -10,7 +10,11 @@ interface ResultPanelProps {
 export default function ResultPanel({ result }: ResultPanelProps) {
   const { t } = useTranslation();
   if (!result) {
-    return <Empty description={t("query.emptyHint")} style={{ marginTop: 60 }} />;
+    return (
+      <div className="query-result-empty">
+        <Empty description={t("query.emptyHint")} />
+      </div>
+    );
   }
 
   const columns = result.columns.map((c) => ({ title: c, dataIndex: c, key: c, ellipsis: true }));
@@ -46,7 +50,7 @@ export default function ResultPanel({ result }: ResultPanelProps) {
                   background: "var(--ant-color-fill-quaternary)",
                   padding: 12,
                   borderRadius: "var(--ant-border-radius)",
-                  fontSize: 12,
+                  fontSize: 13,
                   color: result.success ? undefined : "var(--ant-color-error)",
                 }}
               >

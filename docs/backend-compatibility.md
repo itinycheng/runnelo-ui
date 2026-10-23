@@ -22,23 +22,34 @@ backend at `flink-platform-ui/frontend` as a Git submodule.
 
 ## Compatibility decisions
 
-| UI capability       | Existing backend mapping                                    |
-| ------------------- | ----------------------------------------------------------- |
-| Definition explorer | Virtual root built from `/jobFlow/page` and `/jobInfo/page` |
-| Definition folders  | Hidden; the backend has no group resource                   |
-| Workflow creation   | `/jobFlow/create` with legacy scheduling defaults           |
-| Task creation       | `/jobInfo/create`; each task selects its owning `flowId`     |
-| DAG composition     | Existing flow tasks from `/jobInfo/list` become vertices    |
-| Flow run list       | `/jobFlowRun/page`, with legacy query parameter adaptation  |
-| Flow run detail     | `/jobFlowRun/get/{id}` plus `/jobRun/page?flowRunId=...`    |
-| Job log             | `backInfo` from `/jobRun/get/{id}`                          |
-| Kill flow           | GET `/jobFlowRun/kill/{id}`                                 |
-| Dashboard totals    | `/dashboard/jobFlowRunStatusCount`                          |
-| Dashboard trend     | Hidden/empty until a time-series endpoint exists            |
-| SQL execution       | `/reactive/execJob`                                         |
-| Schema browser      | Empty until metadata endpoints exist                        |
-| Monitor page        | Redirected to existing alert-rule management                |
-| System config       | `/config/*` with the backend's polymorphic `FLINK` payload   |
+| UI capability       | Existing backend mapping                                       |
+| ------------------- | -------------------------------------------------------------- |
+| Definition explorer | Virtual root built from `/jobFlow/page` and `/jobInfo/page`    |
+| Definition folders  | Hidden in the legacy backend; development mocks support groups |
+| Workflow creation   | `/jobFlow/create` with legacy scheduling defaults              |
+| Task creation       | `/jobInfo/create`; each task selects its owning `flowId`       |
+| DAG composition     | Existing flow tasks from `/jobInfo/list` become vertices       |
+| Flow run list       | `/jobFlowRun/page`, with legacy query parameter adaptation     |
+| Flow run detail     | `/jobFlowRun/get/{id}` plus `/jobRun/page?flowRunId=...`       |
+| Job log             | `backInfo` from `/jobRun/get/{id}`                             |
+| Kill flow           | GET `/jobFlowRun/kill/{id}`                                    |
+| Dashboard totals    | `/dashboard/jobFlowRunStatusCount`                             |
+| Dashboard trend     | Hidden/empty until a time-series endpoint exists               |
+| SQL execution       | `/reactive/execJob`                                            |
+| Schema browser      | Empty until metadata endpoints exist                           |
+| Monitor page        | Redirected to existing alert-rule management                   |
+| System config       | `/config/*` with the backend's polymorphic `FLINK` payload     |
+
+In development mock mode, the definition explorer uses the existing mock
+`/jobTree/*` and `/jobGroup/*` handlers. It supports multiple root groups and
+one subgroup level. The deployed legacy backend still uses one virtual
+Definitions root and cannot persist group changes.
+
+The Studio right panels are shared by workflows and tasks. Workflow settings
+use `JobFlow`; task parameters use `JobInfo.params`. In mock mode, each task also
+stores its own Schedule and Alerts settings on its mock `JobInfo`. The legacy
+backend has no corresponding task Schedule/Alerts fields, so those two panels
+show an availability notice for tasks outside mock mode.
 
 ## Authentication modes
 

@@ -52,7 +52,7 @@ export default function ParamsPanel({ nodeId }: { nodeId: string }) {
     <Spin spinning={loading}>
       {ctx}
       <Flex vertical gap={12} style={{ padding: "0 4px" }}>
-        <Typography.Text type="secondary" style={{ fontSize: 12 }}>
+        <Typography.Text type="secondary" className="app-meta-text">
           {t("sidePanel.paramsDescription")}
         </Typography.Text>
         <Form form={form} layout="vertical" size="small">

@@ -85,13 +85,13 @@ export function TaskNode({ data, selected }: NodeProps) {
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       style={{
-        padding: "4px 6px",
+        padding: "5px 8px",
         border,
         background: "var(--ant-color-bg-container)",
         borderRadius: "var(--ant-border-radius-sm)",
         minWidth: 60,
         textAlign: "center",
-        fontSize: 11,
+        fontSize: 13,
         position: "relative",
         display: "flex",
         alignItems: "center",
@@ -131,8 +131,8 @@ export function TaskNode({ data, selected }: NodeProps) {
             color: "var(--ant-color-text-light-solid)",
             borderRadius: "var(--ant-border-radius-sm)",
             padding: "4px 8px",
-            fontSize: 10,
-            lineHeight: "14px",
+            fontSize: 12,
+            lineHeight: "18px",
             whiteSpace: "nowrap",
             zIndex: 10,
             pointerEvents: "none",

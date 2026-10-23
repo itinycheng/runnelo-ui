@@ -1,6 +1,6 @@
 /* Responsive page composition stays in CSS; component visuals use Ant props. */
 .dashboard-page__row {
-  margin-bottom: 16px;
+  margin-bottom: var(--app-space-3);
 }
 
 .dashboard-page__row--last {
@@ -9,18 +9,16 @@
 
 .dashboard-chart {
   width: 100%;
-  height: 240px;
+  height: 220px;
   min-height: 0;
 }
 
 @media (min-width: 992px) {
   .dashboard-page {
     display: grid;
-    grid-template-rows: auto minmax(0, 1fr) minmax(0, 1fr);
-    gap: 16px;
-    height: 100%;
-    min-height: 0;
-    overflow: hidden;
+    min-height: 100%;
+    grid-template-rows: auto minmax(260px, 1fr) minmax(250px, 0.8fr);
+    gap: var(--app-space-3);
   }
 
   .dashboard-page__row {
@@ -29,12 +27,12 @@
   }
 
   .dashboard-panel {
-    height: 100%;
     min-height: 0;
   }
 
-  .dashboard-chart {
+  .dashboard-page__row--charts .dashboard-chart {
     flex: 1;
     height: auto;
+    min-height: 200px;
   }
 }

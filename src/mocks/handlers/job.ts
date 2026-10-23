@@ -11,6 +11,7 @@ import {
   recordPlacement,
   renameLeaf,
   deleteLeaf,
+  nextDefinitionRef,
 } from "@/mocks/data/jobTree";
 import type { JobInfo } from "@/types/entities";
 import type { JobType } from "@/constants/enums";
@@ -22,7 +23,6 @@ import { ipage, parsePageSize } from "@/mocks/lib/page";
 // ---- JobInfo (backend-shaped task entity) store ----
 
 const jobInfoStore = new Map<number, JobInfo>();
-let jobInfoSeq = 1000;
 
 function defaultConfig(type: JobType) {
   const base = { type, retryTimes: 0, retryInterval: "5s" };
@@ -58,6 +58,12 @@ function seededJobInfos(): JobInfo[] {
     }));
 }
 
+function allJobInfos(): JobInfo[] {
+  const byId = new Map(seededJobInfos().map((job) => [job.id!, job]));
+  for (const job of jobInfoStore.values()) byId.set(job.id!, job);
+  return [...byId.values()];
+}
+
 const DEMO_FLOW_TASKS: Array<Pick<JobInfo, "name" | "type" | "subject">> = [
   { name: "读取源数据", type: "MYSQL_SQL", subject: "SELECT * FROM source_table" },
   { name: "Flink 实时转换", type: "FLINK_SQL", subject: "SELECT * FROM source_stream" },
@@ -66,7 +72,7 @@ const DEMO_FLOW_TASKS: Array<Pick<JobInfo, "name" | "type" | "subject">> = [
 
 /** Ensure seeded workflows always have enough stable tasks to render a useful demo DAG. */
 export function ensureMockJobsForFlow(flowId: number): JobInfo[] {
-  const owned = [...seededJobInfos(), ...jobInfoStore.values()].filter((job) => job.flowId === flowId);
+  const owned = allJobInfos().filter((job) => job.flowId === flowId);
   for (let index = owned.length; index < DEMO_FLOW_TASKS.length; index++) {
     const template = DEMO_FLOW_TASKS[index];
     const id = 1_000_000 + flowId * 10 + index;
@@ -94,8 +100,7 @@ export const workflowHandlers: RequestHandler[] = [
     const url = new URL(request.url);
     const { page, size } = parsePageSize(url);
     const name = url.searchParams.get("name")?.toLowerCase();
-    const stored = [...jobInfoStore.values()];
-    const rows = [...seededJobInfos(), ...stored].filter((job) => !name || job.name.toLowerCase().includes(name));
+    const rows = allJobInfos().filter((job) => !name || job.name.toLowerCase().includes(name));
     return ok(ipage(rows, page, size));
   }),
 
@@ -206,12 +211,12 @@ export const workflowHandlers: RequestHandler[] = [
   http.post("/api/jobInfo/create", async ({ request }) => {
     await delay(200);
     const { groupId, ...body } = (await request.json()) as JobInfo & { groupId?: string };
-    const id = ++jobInfoSeq;
+    const id = nextDefinitionRef();
     const stored: JobInfo = { ...body, id, status: "ONLINE" };
     jobInfoStore.set(id, stored);
     if (groupId) {
       recordPlacement({
-        id: String(id),
+        id: `job:${id}`,
         name: stored.name,
         kind: "task",
         jobType: stored.type,

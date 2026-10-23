@@ -6,7 +6,7 @@ export interface NumOption {
 }
 
 export function workerOptions(workers: Worker[]): NumOption[] {
-  return workers.map((w) => ({ value: w.id!, label: `${w.name} (${w.ip}) · ${w.role}` }));
+  return workers?.map((w) => ({ value: w.id!, label: `${w.name} (${w.ip}) · ${w.role}` }));
 }
 export function datasourceOptions(items: Datasource[]): NumOption[] {
   return items.map((d) => ({ value: d.id!, label: `${d.name} · ${d.type}` }));

@@ -2,6 +2,7 @@ import { http } from "@/utils/request";
 import type { JobFlow, ExecutionConfig, JobFlowDag, JobInfo } from "@/types/entities";
 import type { FlowGraph } from "@/types/flow";
 import { definitionRef, getJobInfosByIds, updateJobInfo } from "@/api/job";
+import { USE_MOCK_DEFINITION_GROUPS } from "@/config";
 
 function isFlowGraph(flow: JobFlow["flow"]): flow is FlowGraph {
   return !!flow && "nodes" in flow;
@@ -92,8 +93,7 @@ export async function getFlowGraph(id: string | number): Promise<FlowGraph> {
 
 /** Create a workflow; the backend returns the new id (not the entity). */
 export function createJobFlow(data: JobFlow, groupId?: string): Promise<number> {
-  void groupId;
-  return http.post<number>("/jobFlow/create", data);
+  return http.post<number>("/jobFlow/create", USE_MOCK_DEFINITION_GROUPS ? { ...data, groupId } : data);
 }
 
 /** Update a workflow's settings; returns its id. */

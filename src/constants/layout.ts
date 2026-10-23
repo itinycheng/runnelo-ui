@@ -8,4 +8,4 @@
 export const PAGE_PADDING = 16;
 
 /** Vertical gap between stacked content blocks/sections within a page. */
-export const SECTION_GAP = 16;
+export const SECTION_GAP = 12;

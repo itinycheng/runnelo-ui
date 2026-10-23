@@ -11,7 +11,14 @@ import {
   type FormInstance,
   type FormListFieldData,
 } from "antd";
-import { CheckCircleOutlined, EditOutlined, MinusCircleOutlined, PlusOutlined, StopOutlined } from "@ant-design/icons";
+import {
+  CheckCircleOutlined,
+  EditOutlined,
+  MinusCircleOutlined,
+  PlusOutlined,
+  SettingOutlined,
+  StopOutlined,
+} from "@ant-design/icons";
 import { ProTable, type ProColumns } from "@ant-design/pro-components";
 import { useTranslation } from "react-i18next";
 import type { TFunction } from "i18next";
@@ -325,13 +332,20 @@ function useUserColumns(
 ) {
   return useMemo<ProColumns<ManagedUser>[]>(
     () => [
-      { title: t("user2.usernameLabel"), dataIndex: "username", key: "username", ellipsis: true },
-      { title: t("user2.emailLabel"), dataIndex: "email", key: "email", ellipsis: true },
+      {
+        title: t("user2.usernameLabel"),
+        dataIndex: "username",
+        key: "username",
+        width: 190,
+        ellipsis: true,
+        fixed: "left",
+      },
+      { title: t("user2.emailLabel"), dataIndex: "email", key: "email", width: 250, ellipsis: true },
       {
         title: t("user2.rolesLabel"),
         dataIndex: "roles",
         key: "roles",
-        width: 200,
+        width: 160,
         render: (_, row) => <UserRoleTag roles={row.roles} />,
       },
       {
@@ -345,14 +359,15 @@ function useUserColumns(
         title: t("common.createdAt"),
         dataIndex: "createdAt",
         key: "createdAt",
-        width: 200,
+        width: 180,
         valueType: "dateTime",
         sorter: true,
       },
       {
         title: t("common.operation"),
         key: "action",
-        width: 180,
+        width: 100,
+        fixed: "right",
         render: (_, record) => <UserActionsCell record={record} onEdit={onEdit} onToggleStatus={onToggleStatus} />,
       },
     ],
@@ -379,13 +394,33 @@ export default function UserList() {
   return (
     <div data-testid="user-list">
       <ProTable<ManagedUser>
-        headerTitle={t("user2.title")}
+        headerTitle={
+          <h1 className="app-page-title" style={{ margin: 0 }}>
+            {t("user2.title")}
+          </h1>
+        }
         rowKey="id"
         columns={columns}
         dataSource={usersQuery.data?.data ?? []}
         loading={usersQuery.isFetching}
         search={false}
+        options={{
+          reload: false,
+          density: false,
+          setting: {
+            draggable: false,
+            children: (
+              <Button type="text" aria-label={t("common.columnSettings")} icon={<SettingOutlined aria-hidden />} />
+            ),
+          },
+        }}
+        columnsState={{ defaultValue: { username: { fixed: "left" }, action: { fixed: "right", disable: true } } }}
+        tableLayout="fixed"
+        scroll={{ x: 980 }}
         toolBarRender={() => [
+          <Button key="refresh" onClick={() => void usersQuery.refetch()}>
+            {t("common.refresh")}
+          </Button>,
           <Button
             key="add"
             type="primary"

@@ -10,13 +10,15 @@ import { StatusDonut, RunListCard } from "./panels";
 import { useQuery } from "@tanstack/react-query";
 import { useWorkspaceStore } from "@/stores/workspaceStore";
 import { queryKeys } from "@/api/queryKeys";
-import { executionStatusVisualColor } from "@/utils/statusColor";
+import { executionStatusVisualColor, STATUS_TOKEN_COLOR } from "@/utils/statusColor";
+import { SECTION_GAP } from "@/constants/layout";
+import type { ExecutionStatus } from "@/constants/enums";
 import "./Dashboard.css";
 
 const TREND_SERIES = [
-  { key: "success", color: executionStatusVisualColor("SUCCESS") },
-  { key: "failed", color: executionStatusVisualColor("FAILURE") },
-  { key: "running", color: executionStatusVisualColor("RUNNING") },
+  { key: "success", status: "SUCCESS", color: STATUS_TOKEN_COLOR.success },
+  { key: "failed", status: "FAILURE", color: executionStatusVisualColor("FAILURE") },
+  { key: "running", status: "RUNNING", color: executionStatusVisualColor("RUNNING") },
 ] as const;
 
 type TimeRange = "7d" | "14d" | "30d";
@@ -36,9 +38,15 @@ function StatCard({ title, scope, value, icon, iconColor, onClick }: StatCardPro
       <Card
         hoverable
         role="button"
+        aria-label={`${title} ${scope}: ${value}`}
         tabIndex={0}
         onClick={onClick}
-        onKeyDown={(e) => (e.key === "Enter" || e.key === " ") && onClick()}
+        onKeyDown={(e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            onClick();
+          }
+        }}
         style={{ height: "100%", cursor: "pointer" }}
         styles={{ body: { position: "relative", height: "100%" } }}
       >
@@ -46,14 +54,17 @@ function StatCard({ title, scope, value, icon, iconColor, onClick }: StatCardPro
           title={
             <Flex align="baseline" gap={8}>
               <span>{title}</span>
-              <Typography.Text type="secondary" style={{ fontSize: 12 }}>
+              <Typography.Text type="secondary" className="app-meta-text">
                 {scope}
               </Typography.Text>
             </Flex>
           }
           value={value}
+          styles={{ content: { fontSize: 28, fontWeight: 650, lineHeight: 1.15, fontVariantNumeric: "tabular-nums" } }}
         />
-        <span style={{ position: "absolute", top: 16, right: 16, fontSize: 24, color: iconColor }}>{icon}</span>
+        <span aria-hidden="true" style={{ position: "absolute", top: 16, right: 16, fontSize: 24, color: iconColor }}>
+          {icon}
+        </span>
       </Card>
     </Col>
   );
@@ -63,7 +74,7 @@ function TrendChart({ trend }: { trend: TrendDataPoint[] }) {
   const { t } = useTranslation();
   const navigate = useNavigate();
   // Drill-down: clicking a series jumps to Job Runs filtered by that status.
-  const drill = (status: string) => {
+  const drill = (status: ExecutionStatus) => {
     void navigate(`/runs?status=${status}`);
   };
   return trend.length === 0 ? (
@@ -71,31 +82,60 @@ function TrendChart({ trend }: { trend: TrendDataPoint[] }) {
       <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={t("dashboard.trendUnavailable")} />
     </Flex>
   ) : (
-    <div className="dashboard-chart">
-      <ResponsiveContainer width="100%" height="100%">
-        <LineChart data={trend} margin={{ top: 8, right: 12, bottom: 0, left: -16 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke="var(--ant-color-border-secondary)" vertical={false} />
-          <XAxis dataKey="date" tick={{ fontSize: 12 }} stroke="var(--ant-color-text-tertiary)" />
-          <YAxis tick={{ fontSize: 12 }} stroke="var(--ant-color-text-tertiary)" allowDecimals={false} width={44} />
-          <Tooltip />
-          <Legend onClick={(e) => drill(String(e.dataKey))} wrapperStyle={{ cursor: "pointer" }} />
-          {TREND_SERIES.map((s) => (
-            <Line
-              key={s.key}
-              type="monotone"
-              dataKey={s.key}
-              name={t(`dashboard.${s.key}`)}
-              stroke={s.color}
-              strokeWidth={2}
-              dot={{ r: 3, cursor: "pointer" }}
-              activeDot={{ r: 5, cursor: "pointer", onClick: () => drill(s.key) }}
-              onClick={() => drill(s.key)}
-              style={{ cursor: "pointer" }}
+    <>
+      <div className="dashboard-chart" aria-hidden="true">
+        <ResponsiveContainer width="100%" height="100%">
+          <LineChart data={trend} margin={{ top: 8, right: 12, bottom: 0, left: -16 }}>
+            <CartesianGrid strokeDasharray="3 3" stroke="var(--ant-color-border-secondary)" vertical={false} />
+            <XAxis dataKey="date" tick={{ fontSize: 12 }} stroke="var(--ant-color-text-tertiary)" />
+            <YAxis tick={{ fontSize: 12 }} stroke="var(--ant-color-text-tertiary)" allowDecimals={false} width={44} />
+            <Tooltip />
+            <Legend
+              onClick={(e) => {
+                const series = TREND_SERIES.find((item) => item.key === e.dataKey);
+                if (series) drill(series.status);
+              }}
+              wrapperStyle={{ cursor: "pointer" }}
             />
+            {TREND_SERIES.map((s) => (
+              <Line
+                key={s.key}
+                type="monotone"
+                dataKey={s.key}
+                name={t(`dashboard.${s.key}`)}
+                stroke={s.color}
+                strokeWidth={2}
+                dot={{ r: 3, cursor: "pointer" }}
+                activeDot={{ r: 5, cursor: "pointer", onClick: () => drill(s.status) }}
+                onClick={() => drill(s.status)}
+                style={{ cursor: "pointer" }}
+              />
+            ))}
+          </LineChart>
+        </ResponsiveContainer>
+      </div>
+      <table className="app-sr-only">
+        <caption>{t("dashboard.taskTrend")}</caption>
+        <thead>
+          <tr>
+            <th scope="col">{t("dashboard.date")}</th>
+            <th scope="col">{t("dashboard.success")}</th>
+            <th scope="col">{t("dashboard.failed")}</th>
+            <th scope="col">{t("dashboard.running")}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {trend.map((point) => (
+            <tr key={point.date}>
+              <th scope="row">{point.date}</th>
+              <td>{point.success}</td>
+              <td>{point.failed}</td>
+              <td>{point.running}</td>
+            </tr>
           ))}
-        </LineChart>
-      </ResponsiveContainer>
-    </div>
+        </tbody>
+      </table>
+    </>
   );
 }
 
@@ -116,14 +156,16 @@ function TaskTrendCard({ trend, timeRange, onTimeRangeChange }: TaskTrendCardPro
   return (
     <Col xs={24} lg={16} className="dashboard-panel">
       <Card
+        size="small"
         style={{ height: "100%" }}
         styles={{ body: { height: "100%", minHeight: 0, display: "flex", flexDirection: "column" } }}
       >
-        <Flex justify="space-between" align="center" style={{ marginBottom: 16 }}>
-          <Typography.Text strong style={{ fontSize: 15 }}>
+        <Flex justify="space-between" align="center" style={{ marginBottom: SECTION_GAP }}>
+          <h2 className="app-section-title" style={{ margin: 0 }}>
             {t("dashboard.taskTrend")}
-          </Typography.Text>
+          </h2>
           <Segmented
+            aria-label={t("dashboard.taskTrend")}
             options={timeRanges}
             value={timeRange}
             onChange={(v) => onTimeRangeChange(v as TimeRange)}
@@ -157,7 +199,8 @@ export default function Dashboard() {
 
   return (
     <div className="dashboard-page">
-      <Row gutter={[16, 16]} className="dashboard-page__row">
+      <h1 className="app-sr-only">{t("dashboard.title")}</h1>
+      <Row gutter={[SECTION_GAP, SECTION_GAP]} className="dashboard-page__row">
         <StatCard
           title={t("dashboard.totalRuns")}
           scope={t("dashboard.last24h")}
@@ -171,7 +214,7 @@ export default function Dashboard() {
           scope={t("dashboard.last24h")}
           value={stats?.successTasks ?? "-"}
           icon={<CheckCircleOutlined />}
-          iconColor={executionStatusVisualColor("SUCCESS")}
+          iconColor={STATUS_TOKEN_COLOR.success}
           onClick={toRuns("SUCCESS")}
         />
         <StatCard
@@ -192,13 +235,13 @@ export default function Dashboard() {
         />
       </Row>
 
-      <Row gutter={[16, 16]} className="dashboard-page__row">
+      <Row gutter={[SECTION_GAP, SECTION_GAP]} className="dashboard-page__row dashboard-page__row--charts">
         <Col xs={24} lg={8} className="dashboard-panel">
           <StatusDonut stats={stats} />
         </Col>
         <TaskTrendCard trend={trend} timeRange={timeRange} onTimeRangeChange={setTimeRange} />
       </Row>
-      <Row gutter={[16, 16]} className="dashboard-page__row dashboard-page__row--last">
+      <Row gutter={[SECTION_GAP, SECTION_GAP]} className="dashboard-page__row dashboard-page__row--last">
         <Col xs={24} lg={12} className="dashboard-panel">
           <RunListCard status="FAILURE" title={t("dashboard.recentFailed")} emptyText={t("dashboard.noFailures")} />
         </Col>

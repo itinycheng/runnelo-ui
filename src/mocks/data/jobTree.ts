@@ -34,6 +34,11 @@ const GROUP_SPECS: { name: string; size: number }[] = [
 let leafRefSeq = 0;
 let seeded = false;
 
+/** Shared numeric ids for seeded and newly created mock definitions. */
+export function nextDefinitionRef(): number {
+  return ++leafRefSeq;
+}
+
 function seedLeaf(gi: number, groupId: string): JobTreeNode {
   const isWorkflow = faker.datatype.boolean();
   const jobType = faker.helpers.arrayElement<JobType>(["MYSQL_SQL", "SHELL", "FLINK_SQL", "FLINK_JAR"]);
@@ -52,7 +57,7 @@ function seedLeaf(gi: number, groupId: string): JobTreeNode {
         ]) + ` ${gi}-${faker.number.int({ min: 1, max: 99 })}`,
     kind: isWorkflow ? "workflow" : "task",
     jobType: isWorkflow ? undefined : jobType,
-    refId: ++leafRefSeq,
+    refId: nextDefinitionRef(),
     pid: groupId,
     // Latest-run status (run outcome), shown as an icon on the definition node.
     status: faker.helpers.arrayElement(["success", "failed", "running", "pending", "stopped"] as JobStatus[]),

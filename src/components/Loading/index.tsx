@@ -44,7 +44,7 @@ export default function Loading({ loading = true, tip, size = "large", fullPage 
 
   if (fullPage) {
     return (
-      <Flex data-testid="loading-fullpage" justify="center" align="center">
+      <Flex data-testid="loading-fullpage" justify="center" align="center" style={{ minHeight: "100vh" }}>
         {spinner}
       </Flex>
     );

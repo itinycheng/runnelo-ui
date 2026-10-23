@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import type { Key } from "react";
 import { useTranslation } from "react-i18next";
-import { Button, Empty, Flex, Input, Select, Spin, Tree, Typography, type TreeDataNode } from "antd";
+import { Button, Empty, Flex, Input, Select, Spin, Tree, type TreeDataNode } from "antd";
 import { DatabaseOutlined, MenuFoldOutlined, SearchOutlined, TableOutlined } from "@ant-design/icons";
 import { getDatabases, getTables } from "@/api/query";
 
@@ -46,8 +46,10 @@ function SchemaHeader({ onCollapse }: { onCollapse?: () => void }) {
   return (
     <Flex align="center" justify="space-between" style={{ minHeight: 40 }}>
       <Flex align="center" gap={8}>
-        <DatabaseOutlined style={{ color: "var(--ant-color-text-tertiary)" }} />
-        <Typography.Text strong>{t("query.schema")}</Typography.Text>
+        <DatabaseOutlined aria-hidden style={{ color: "var(--ant-color-text-tertiary)" }} />
+        <h2 className="app-section-title" style={{ margin: 0 }}>
+          {t("query.schema")}
+        </h2>
       </Flex>
       {onCollapse && (
         <Button
@@ -128,7 +130,9 @@ export default function SchemaSidebar({
     >
       <Flex vertical gap={8} style={{ flexShrink: 0, padding: "8px 12px 12px" }}>
         {showHeader && <SchemaHeader onCollapse={onCollapse} />}
+        {!showHeader && <h2 className="app-sr-only">{t("query.schema")}</h2>}
         <Select
+          aria-label={t("query.selectDatasource")}
           size="small"
           placeholder={t("query.selectDatasource")}
           options={datasources}

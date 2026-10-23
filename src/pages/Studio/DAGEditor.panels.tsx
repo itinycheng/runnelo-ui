@@ -79,7 +79,7 @@ function BottomPanelHeader({ label, typeLabel, onSave, onClose, saveLabel, close
     >
       <Flex align="center" gap={8}>
         <Typography.Text strong>{label}</Typography.Text>
-        <Typography.Text type="secondary" style={{ fontSize: 12 }}>
+        <Typography.Text type="secondary" className="app-meta-text">
           {typeLabel}
         </Typography.Text>
       </Flex>

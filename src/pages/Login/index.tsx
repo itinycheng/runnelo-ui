@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate, useSearchParams } from "react-router-dom";
 import { App as AntApp, Card, Flex, Form, Input, Button, Typography, Spin } from "antd";
-import { LockOutlined, UserOutlined } from "@ant-design/icons";
+import { EyeInvisibleOutlined, EyeOutlined, LockOutlined, UserOutlined } from "@ant-design/icons";
 import { useTranslation } from "react-i18next";
 import { useAuthStore } from "@/stores/authStore";
 import { getLoginConfig } from "@/api/auth";
@@ -30,26 +30,51 @@ function LocalLoginForm({
   loading: boolean;
 }) {
   const { t } = useTranslation();
+  const [passwordVisible, setPasswordVisible] = useState(false);
   return (
     <Form<LoginFormValues>
       form={form}
       onFinish={onFinish}
       autoComplete="off"
+      layout="vertical"
       size="large"
       initialValues={{ username: "admin", password: "111111" }}
     >
-      <Form.Item name="username" rules={[{ required: true, message: t("login.usernameRequired") }]}>
+      <Form.Item
+        name="username"
+        label={t("login.username")}
+        rules={[{ required: true, message: t("login.usernameRequired") }]}
+      >
         <Input prefix={<UserOutlined />} placeholder={t("login.username")} data-testid="username-input" />
       </Form.Item>
-      <Form.Item name="password" rules={[{ required: true, message: t("login.passwordRequired") }]}>
-        <Input.Password prefix={<LockOutlined />} placeholder={t("login.password")} data-testid="password-input" />
+      <Form.Item
+        name="password"
+        label={t("login.password")}
+        rules={[{ required: true, message: t("login.passwordRequired") }]}
+      >
+        <Input
+          type={passwordVisible ? "text" : "password"}
+          prefix={<LockOutlined aria-hidden />}
+          suffix={
+            <Button
+              type="text"
+              size="small"
+              aria-label={t(passwordVisible ? "login.hidePassword" : "login.showPassword")}
+              aria-pressed={passwordVisible}
+              icon={passwordVisible ? <EyeOutlined aria-hidden /> : <EyeInvisibleOutlined aria-hidden />}
+              onClick={() => setPasswordVisible((visible) => !visible)}
+            />
+          }
+          placeholder={t("login.password")}
+          data-testid="password-input"
+        />
       </Form.Item>
       <Form.Item>
         <Button type="primary" htmlType="submit" loading={loading} block data-testid="login-button">
           {t("login.loginButton")}
         </Button>
       </Form.Item>
-      <Typography.Text type="secondary" style={{ display: "block", textAlign: "center", fontSize: 12 }}>
+      <Typography.Text type="secondary" className="app-meta-text" style={{ display: "block", textAlign: "center" }}>
         {t("login.demoHint")}
       </Typography.Text>
     </Form>

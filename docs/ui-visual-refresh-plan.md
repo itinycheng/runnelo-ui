@@ -1,8 +1,8 @@
 # Runnelo UI Visual Refresh Plan
 
-Status: phase 1 foundation and cross-page interaction tokens implemented; theme selection in review
+Status: shared typography and spacing applied; Runs, Dashboard, Query, Admin, and Studio pilots implemented; theme selection in review
 
-Last updated: 2026-10-03
+Last updated: 2026-10-20
 
 ## Goal
 
@@ -92,6 +92,18 @@ Flink Coral is the default preset. The selected preset is stored locally for com
 - Custom graph, chart, lifecycle, and run-status visuals use Ant Design semantic CSS variables instead of duplicated hex values.
 - Studio activity/filter/palette controls use Ant Design Button and CheckableTag interactions so hover, focus, and selection remain keyboard-visible and theme-aware.
 - Handwritten CSS is colocated with the owning Studio/FlowCanvas component and limited to structural layout or third-party state selectors.
+
+## Shared Typography And Density Result
+
+- Geist is bundled for Latin text and numbers; Chinese uses the platform Chinese font fallback.
+- The shared scale is 14px base text, 13px supporting text, 16px section headings, 18px list headings, and 20px major page headings. Data-table body text is 15px, with 13px headers and status tags.
+- Page padding remains 16px. Section gaps are 12px, with 8px used inside compact controls and row content. Controls remain 32px high by default.
+- `src/theme.ts` owns Ant component tokens, `src/constants/layout.ts` owns React page spacing, and `src/global.css` owns shared heading and table rules. Page styles should express layout needs rather than repeat these foundations.
+- Runs uses one toolbar row for filters, title, refresh, and column settings. Dashboard recent-run cards grow with their content. Query results fill the available work area. Admin tables inherit the shared heading and data typography; wide configuration tables use horizontal scrolling. Studio keeps its full-bleed canvas and compact tree while section labels use the shared scale.
+- Run type and status information remains accessible as text. The environment watermark is a deployment configuration and is outside this visual pass.
+- Login fields now keep visible labels while typing. Custom clickable cards and links show a keyboard focus outline, and custom editor, canvas, and resizer transitions stop under reduced-motion settings.
+- Mock-based checks covered 1280×720 desktop and 390×844, 768×1024, and 1024×768 responsive viewports on Dashboard, Runs, Query, Studio, Admin Users, and Login. Admin Users now scrolls internally with pinned actions, while the Studio explorer overlays the editor below 768px.
+- Contrast checks set editor placeholder text to 4.83:1 on white, the meaningful success chart color to at least 3.46:1 on white, and coral button hover to 4.60:1 with white text. Keyboard targets and reduced-motion handling were improved in Studio and shared components. This is not a full WCAG or assistive-technology certification.
 
 ## Studio DAG Preview Fix
 

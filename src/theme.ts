@@ -46,7 +46,7 @@ export const appPalettes: Record<ThemePresetKey, AppPalette> = {
     description: "Warm coral with a clear product signature",
     brand: "#E6526F",
     accent: "#C43F5B",
-    accentHover: "#D64A67",
+    accentHover: "#C94762",
     accentActive: "#A9334D",
     accentSoft: "#FFF0F3",
     accentSoftHover: "#FFE1E8",
@@ -81,6 +81,7 @@ export const appPalettes: Record<ThemePresetKey, AppPalette> = {
 export const THEME_PRESET_KEYS = Object.keys(appPalettes) as ThemePresetKey[];
 export const DEFAULT_THEME_PRESET: ThemePresetKey = "coral";
 export const APP_HEADER_HEIGHT = 46;
+export const DATA_FONT_SIZE = 15;
 
 export function isThemePresetKey(value: string | null): value is ThemePresetKey {
   return value != null && THEME_PRESET_KEYS.includes(value as ThemePresetKey);
@@ -104,12 +105,15 @@ function createControlComponents(palette: AppPalette): NonNullable<ThemeConfig["
       lineWidth: 1,
       headerHeight: 44,
       headerHeightSM: 38,
-      headerFontSize: 14,
-      headerFontSizeSM: 13,
+      headerFontSize: 16,
+      headerFontSizeSM: 14,
       headerPadding: 16,
       headerPaddingSM: 12,
       bodyPadding: 16,
       bodyPaddingSM: 12,
+    },
+    Form: {
+      itemMarginBottom: 16,
     },
     Input: {
       activeBorderColor: palette.accent,
@@ -150,7 +154,7 @@ function createNavigationComponents(palette: AppPalette): NonNullable<ThemeConfi
       activeBarBorderWidth: 0,
     },
     Tabs: {
-      titleFontSize: 13,
+      titleFontSize: 14,
       titleFontSizeSM: 13,
       inkBarColor: palette.accent,
       itemColor: palette.inkSecondary,
@@ -165,8 +169,11 @@ function createNavigationComponents(palette: AppPalette): NonNullable<ThemeConfi
 function createDataComponents(palette: AppPalette): NonNullable<ThemeConfig["components"]> {
   return {
     Table: {
-      cellPaddingBlock: 10,
-      cellPaddingBlockMD: 9,
+      cellFontSize: DATA_FONT_SIZE,
+      cellFontSizeMD: DATA_FONT_SIZE,
+      cellFontSizeSM: DATA_FONT_SIZE,
+      cellPaddingBlock: 8,
+      cellPaddingBlockMD: 8,
       cellPaddingBlockSM: 7,
       headerBg: palette.surfaceSubtle,
       headerColor: palette.inkSecondary,
@@ -212,6 +219,7 @@ function createAppTheme(palette: AppPalette): ThemeConfig {
       colorPrimaryBorder: palette.accentSoftHover,
       colorPrimaryBorderHover: palette.accentHover,
       colorInfo: palette.accent,
+      colorSuccess: "#389E0D",
       colorLink: palette.accentActive,
       colorLinkHover: palette.accentHover,
       colorLinkActive: palette.accentActive,
@@ -237,9 +245,18 @@ function createAppTheme(palette: AppPalette): ThemeConfig {
       controlItemBgActive: palette.accentSoft,
       controlItemBgActiveHover: palette.accentSoftHover,
       fontSize: 14,
-      fontFamily:
-        '-apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", Arial, sans-serif',
+      fontSizeSM: 13,
+      fontSizeLG: 16,
+      fontSizeHeading5: 16,
+      fontSizeHeading4: 20,
+      fontFamily: '"Geist Variable", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", sans-serif',
       fontFamilyCode: '"SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace',
+      padding: 16,
+      paddingSM: 12,
+      paddingXS: 8,
+      margin: 16,
+      marginSM: 12,
+      marginXS: 8,
       borderRadius: 6,
       borderRadiusSM: 4,
       borderRadiusLG: 8,

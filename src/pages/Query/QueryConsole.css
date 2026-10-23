@@ -1,0 +1,33 @@
+.query-workspace {
+  height: 100%;
+  min-width: 0;
+  min-height: 0;
+  overflow: auto;
+}
+
+.query-workspace__editor,
+.query-workspace__results {
+  flex-shrink: 0;
+  box-shadow: none;
+}
+
+.query-workspace__results {
+  display: flex;
+  flex: 1 0 auto;
+  flex-direction: column;
+  min-height: 240px;
+}
+
+.query-workspace__results .ant-card-body {
+  display: flex;
+  flex: 1 0 auto;
+  flex-direction: column;
+}
+
+.query-result-empty {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  min-height: 180px;
+}

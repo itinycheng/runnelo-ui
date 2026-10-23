@@ -1,8 +1,17 @@
 import JobTree from "@/pages/Studio/JobTree";
-import { SearchOutlined, ApartmentOutlined, WarningOutlined, DeleteOutlined, FilterOutlined } from "@ant-design/icons";
+import {
+  SearchOutlined,
+  ApartmentOutlined,
+  WarningOutlined,
+  DeleteOutlined,
+  FilterOutlined,
+  FolderAddOutlined,
+} from "@ant-design/icons";
 import { Badge, Button, Divider, Flex, Input, Popover, Tag, Tooltip, Typography } from "antd";
 import React, { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { USE_MOCK_DEFINITION_GROUPS } from "@/config";
+import GroupCreateModal from "./GroupCreateModal";
 import "./Sider.css";
 
 const JOB_TYPE_FILTERS = [
@@ -30,9 +39,6 @@ const PANELS: { key: PanelKey; icon: React.ReactNode; tooltip: string }[] = [
   { key: "trash", icon: <DeleteOutlined />, tooltip: "sider.trash" },
 ];
 
-const ICON_BAR_WIDTH = 45;
-const ICON_SIZE = 45;
-
 const MIN_PANEL_WIDTH = 180;
 const MAX_PANEL_WIDTH = 480;
 const DEFAULT_PANEL_WIDTH = 240;
@@ -40,6 +46,19 @@ const DEFAULT_PANEL_WIDTH = 240;
 /** Panel width with a drag-to-resize handler (resets to default on refresh). */
 function usePanelWidth() {
   const [width, setWidth] = useState(DEFAULT_PANEL_WIDTH);
+
+  const resizeWithKey = useCallback((e: React.KeyboardEvent) => {
+    const step = e.shiftKey ? 20 : 10;
+    if (e.key === "ArrowLeft" || e.key === "ArrowRight") {
+      e.preventDefault();
+      setWidth((current) =>
+        Math.min(MAX_PANEL_WIDTH, Math.max(MIN_PANEL_WIDTH, current + (e.key === "ArrowRight" ? step : -step))),
+      );
+    } else if (e.key === "Home" || e.key === "End") {
+      e.preventDefault();
+      setWidth(e.key === "Home" ? MIN_PANEL_WIDTH : MAX_PANEL_WIDTH);
+    }
+  }, []);
 
   const startResize = useCallback(
     (e: React.MouseEvent) => {
@@ -64,19 +83,22 @@ function usePanelWidth() {
     [width],
   );
 
-  return { width, startResize };
+  return { width, startResize, resizeWithKey };
 }
 
 const iconStyle: React.CSSProperties = {
-  width: ICON_SIZE,
-  height: ICON_SIZE,
+  width: "var(--studio-rail-width)",
+  height: "var(--studio-rail-width)",
   display: "flex",
   alignItems: "center",
   justifyContent: "center",
   cursor: "pointer",
   fontSize: 18,
   borderRadius: 2,
-  transition: "all 0.15s",
+  border: 0,
+  background: "transparent",
+  padding: 0,
+  transition: "background-color 0.15s, border-color 0.15s, color 0.15s",
 };
 
 const iconActiveStyle: React.CSSProperties = {
@@ -92,20 +114,44 @@ const iconInactiveStyle: React.CSSProperties = {
 };
 
 export default function SiderPanel() {
-  const [activePanel, setActivePanel] = useState<PanelKey | null>("tree");
-  const { width, startResize } = usePanelWidth();
+  const { t } = useTranslation();
+  const [activePanel, setActivePanel] = useState<PanelKey | null>(() =>
+    typeof window !== "undefined" && window.matchMedia?.("(max-width: 767px)").matches ? null : "tree",
+  );
+  const { width, startResize, resizeWithKey } = usePanelWidth();
+
+  useEffect(() => {
+    const media = window.matchMedia?.("(max-width: 767px)");
+    if (!media) return;
+    const onChange = (event: MediaQueryListEvent) => {
+      if (event.matches) setActivePanel(null);
+    };
+    media.addEventListener("change", onChange);
+    return () => media.removeEventListener("change", onChange);
+  }, []);
 
   const handlePanelClick = useCallback((key: PanelKey) => {
     setActivePanel((prev) => (prev === key ? null : key));
   }, []);
 
   return (
-    <Flex style={{ height: "100%", overflow: "hidden" }}>
+    <Flex className="studio-sider" style={{ height: "100%" }}>
       <ActivityBar activePanel={activePanel} onPanelClick={handlePanelClick} />
       {activePanel && (
         <>
           <PanelContent activePanel={activePanel} width={width} />
-          <div className="sider-resizer" onMouseDown={startResize} />
+          <div
+            className="sider-resizer"
+            role="separator"
+            tabIndex={0}
+            aria-label={t("sider.resizeExplorer")}
+            aria-orientation="vertical"
+            aria-valuemin={MIN_PANEL_WIDTH}
+            aria-valuemax={MAX_PANEL_WIDTH}
+            aria-valuenow={width}
+            onMouseDown={startResize}
+            onKeyDown={resizeWithKey}
+          />
         </>
       )}
     </Flex>
@@ -125,7 +171,7 @@ function ActivityBar({
       vertical
       align="center"
       style={{
-        width: ICON_BAR_WIDTH,
+        width: "var(--studio-rail-width)",
         flexShrink: 0,
         paddingTop: 4,
         gap: 2,
@@ -135,12 +181,15 @@ function ActivityBar({
     >
       {PANELS.map((panel) => (
         <Tooltip key={panel.key} title={t(panel.tooltip)} placement="right">
-          <div
+          <button
+            type="button"
+            aria-label={t(panel.tooltip)}
+            aria-pressed={activePanel === panel.key}
             style={activePanel === panel.key ? iconActiveStyle : iconInactiveStyle}
             onClick={() => onPanelClick(panel.key)}
           >
             {panel.icon}
-          </div>
+          </button>
         </Tooltip>
       ))}
     </Flex>
@@ -151,6 +200,7 @@ function PanelContent({ activePanel, width }: { activePanel: PanelKey; width: nu
   return (
     <Flex
       vertical
+      className="studio-sider-panel"
       style={{
         width,
         flexShrink: 0,
@@ -194,7 +244,7 @@ function FilterPopoverContent({
     onToggle: (value: string) => void,
   ) => (
     <div>
-      <Typography.Text type="secondary" style={{ fontSize: 12 }}>
+      <Typography.Text type="secondary" className="app-meta-text">
         {title}
       </Typography.Text>
       <Flex wrap gap={4} style={{ marginTop: 6 }}>
@@ -235,8 +285,57 @@ function FilterPopoverContent({
   );
 }
 
+function TreeFilterHeader({
+  onAddRootGroup,
+  onToggleFilter,
+  open,
+  active,
+}: {
+  onAddRootGroup?: () => void;
+  onToggleFilter: () => void;
+  open: boolean;
+  active: boolean;
+}) {
+  const { t } = useTranslation();
+  return (
+    <Flex align="center" justify="space-between" style={{ flexShrink: 0, paddingInline: 4 }}>
+      <Typography.Text className="app-section-title">{t("sider.jobs")}</Typography.Text>
+      <Flex align="center" gap={4}>
+        {onAddRootGroup && (
+          <Tooltip title={t("workflow.addGroup")} placement="left">
+            <Button
+              type="text"
+              size="small"
+              icon={<FolderAddOutlined aria-hidden />}
+              aria-label={t("workflow.addGroup")}
+              onClick={onAddRootGroup}
+            />
+          </Tooltip>
+        )}
+        <Tooltip title={t("sider.filter")} placement="left">
+          <Button
+            type="text"
+            size="small"
+            icon={<SearchOutlined />}
+            aria-label={t("sider.filter")}
+            aria-pressed={open}
+            onClick={onToggleFilter}
+            style={{ width: 28, color: active ? "var(--ant-color-primary)" : "var(--ant-color-text-tertiary)" }}
+          />
+        </Tooltip>
+      </Flex>
+    </Flex>
+  );
+}
+
 /** Explorer header with a collapsible inline filter (keyword + type/status popover). */
-function TreeFilterBar({ onChange }: { onChange: (filter: FilterState) => void }) {
+function TreeFilterBar({
+  onChange,
+  onAddRootGroup,
+}: {
+  onChange: (filter: FilterState) => void;
+  onAddRootGroup?: () => void;
+}) {
   const { t } = useTranslation();
   const [open, setOpen] = useState(false);
   const [keyword, setKeyword] = useState("");
@@ -265,24 +364,7 @@ function TreeFilterBar({ onChange }: { onChange: (filter: FilterState) => void }
 
   return (
     <>
-      <Flex align="center" justify="space-between" style={{ flexShrink: 0, paddingInline: 4 }}>
-        <Typography.Text strong style={{ fontSize: 14 }}>
-          {t("sider.jobs")}
-        </Typography.Text>
-        <Tooltip title={t("sider.filter")} placement="left">
-          <Button
-            type="text"
-            size="small"
-            icon={<SearchOutlined />}
-            aria-pressed={open}
-            onClick={toggleOpen}
-            style={{
-              width: 28,
-              color: active ? "var(--ant-color-primary)" : "var(--ant-color-text-tertiary)",
-            }}
-          />
-        </Tooltip>
-      </Flex>
+      <TreeFilterHeader onAddRootGroup={onAddRootGroup} onToggleFilter={toggleOpen} open={open} active={active} />
       {open && (
         <Flex gap={4} style={{ flexShrink: 0, padding: "6px 4px 0" }}>
           <Input
@@ -323,14 +405,19 @@ function TreeFilterBar({ onChange }: { onChange: (filter: FilterState) => void }
 /** Tree panel — job tree with add group button and a collapsible inline filter */
 function TreePanel() {
   const [filter, setFilter] = useState<FilterState>({ keyword: "", types: [], statuses: [] });
+  const [creatingRoot, setCreatingRoot] = useState(false);
 
   return (
     <Flex vertical style={{ height: "100%", padding: "4px 4px 0" }}>
-      <TreeFilterBar onChange={setFilter} />
+      <TreeFilterBar
+        onChange={setFilter}
+        onAddRootGroup={USE_MOCK_DEFINITION_GROUPS ? () => setCreatingRoot(true) : undefined}
+      />
       <Divider style={{ margin: "2px 0 6px" }} />
       <div style={{ flex: 1, minHeight: 0, overflow: "auto" }}>
         <JobTree searchKeyword={filter.keyword} typeFilter={filter.types} statusFilter={filter.statuses} />
       </div>
+      <GroupCreateModal open={creatingRoot} parentId="" onClose={() => setCreatingRoot(false)} />
     </Flex>
   );
 }
@@ -348,7 +435,7 @@ function SearchPanel() {
   return (
     <Flex vertical style={{ height: "100%", padding: "4px 4px 0" }}>
       <Flex vertical style={{ flexShrink: 0, paddingInline: 4, gap: 8 }}>
-        <Typography.Text strong style={{ fontSize: 12 }}>
+        <Typography.Text className="app-meta-text" strong>
           {t("sider.search")}
         </Typography.Text>
         <Input
@@ -380,7 +467,7 @@ function SearchPanel() {
         ) : (
           <Flex vertical align="center" justify="center" style={{ height: "100%", opacity: 0.4 }}>
             <SearchOutlined style={{ fontSize: 24 }} />
-            <Typography.Text type="secondary" style={{ marginTop: 8, fontSize: 12 }}>
+            <Typography.Text type="secondary" className="app-meta-text" style={{ marginTop: 8 }}>
               {t("workflow.searchPlaceholder")}
             </Typography.Text>
           </Flex>
@@ -396,7 +483,7 @@ function ErrorsPanel() {
   return (
     <Flex vertical align="center" justify="center" style={{ height: "100%", padding: 16 }}>
       <WarningOutlined style={{ fontSize: 24, color: "var(--ant-color-text-quaternary)" }} />
-      <Typography.Text type="secondary" style={{ marginTop: 8, fontSize: 12 }}>
+      <Typography.Text type="secondary" className="app-meta-text" style={{ marginTop: 8 }}>
         {t("sider.noErrors")}
       </Typography.Text>
     </Flex>
@@ -409,7 +496,7 @@ function TrashPanel() {
   return (
     <Flex vertical align="center" justify="center" style={{ height: "100%", padding: 16 }}>
       <DeleteOutlined style={{ fontSize: 20, color: "var(--ant-color-text-quaternary)" }} />
-      <Typography.Text type="secondary" style={{ marginTop: 8, fontSize: 12 }}>
+      <Typography.Text type="secondary" className="app-meta-text" style={{ marginTop: 8 }}>
         {t("sider.trashEmpty")}
       </Typography.Text>
     </Flex>

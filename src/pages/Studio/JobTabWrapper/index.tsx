@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Button, Drawer, Flex } from "antd";
+import { Alert, Button, Drawer, Flex } from "antd";
 import { useTranslation } from "react-i18next";
 import type { JobTreeNode } from "@/types/job";
 import DAGEditor from "@/pages/Studio/DAGEditor";
@@ -7,6 +7,7 @@ import JobForm from "@/pages/Studio/JobForm";
 import SchedulePanel from "./SchedulePanel";
 import ParamsPanel from "./ParamsPanel";
 import AlertsPanel from "./AlertsPanel";
+import { USE_MOCK_DEFINITION_GROUPS } from "@/config";
 
 type PanelKey = "schedule" | "params" | "alerts";
 
@@ -41,7 +42,7 @@ function PanelBarItem({ label, isActive, onClick }: PanelBarItemProps) {
         width: BAR_WIDTH,
         height: "auto",
         padding: "8px 4px",
-        fontSize: 12,
+        fontSize: "var(--app-font-meta)",
         letterSpacing: 1,
         whiteSpace: "nowrap",
         borderRadius: "var(--ant-border-radius-sm)",
@@ -60,12 +61,9 @@ function PanelBarItem({ label, isActive, onClick }: PanelBarItemProps) {
 export default function JobTabWrapper({ node }: { node: JobTreeNode }) {
   const { t } = useTranslation();
   const [activePanel, setActivePanel] = useState<PanelKey | null>(null);
-  // The main pane differs by kind: a workflow edits its DAG, a single task edits
-  // its node config. But EVERY definition is a job_flow (single-node or multi-node),
-  // so both carry flow-level Schedule/Params/Alerts — the drawer applies to all
-  // definition nodes, not just workflows.
   const isWorkflow = node.kind === "workflow";
-  const hasFlowConfig = isWorkflow;
+  const hasDefinitionSettings = node.kind !== "group";
+  const canEditSettings = isWorkflow || USE_MOCK_DEFINITION_GROUPS || activePanel === "params";
 
   const toggle = (key: PanelKey) => {
     setActivePanel((prev) => (prev === key ? null : key));
@@ -81,8 +79,8 @@ export default function JobTabWrapper({ node }: { node: JobTreeNode }) {
           overflow: "hidden",
         }}
       >
-        {isWorkflow ? <DAGEditor embedded /> : <JobForm nodeId={node.id} />}
-        {hasFlowConfig && (
+        {isWorkflow ? <DAGEditor embedded workflowId={node.refId} /> : <JobForm nodeId={node.id} />}
+        {hasDefinitionSettings && (
           <Drawer
             title={activePanel ? t(`sidePanel.${activePanel}`) : ""}
             placement="right"
@@ -101,16 +99,20 @@ export default function JobTabWrapper({ node }: { node: JobTreeNode }) {
               },
             }}
           >
-            {activePanel === "schedule" && <SchedulePanel nodeId={node.id} />}
-            {activePanel === "params" && <ParamsPanel nodeId={node.id} />}
-            {activePanel === "alerts" && <AlertsPanel nodeId={node.id} />}
+            {canEditSettings ? (
+              <>
+                {activePanel === "schedule" && <SchedulePanel nodeId={node.id} />}
+                {activePanel === "params" && <ParamsPanel nodeId={node.id} />}
+                {activePanel === "alerts" && <AlertsPanel nodeId={node.id} />}
+              </>
+            ) : (
+              <Alert type="info" showIcon message={t("sidePanel.taskSettingsUnavailable")} />
+            )}
           </Drawer>
         )}
       </div>
 
-      {/* Right text bar — Schedule/Params/Alerts apply to every definition (a task
-          is a single-node flow; a workflow is a multi-node flow). */}
-      {hasFlowConfig && (
+      {hasDefinitionSettings && (
         <Flex
           vertical
           align="center"

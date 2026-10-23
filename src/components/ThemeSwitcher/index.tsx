@@ -27,7 +27,7 @@ export default function ThemeSwitcher() {
           />
           <Flex vertical style={{ flex: 1 }}>
             <Typography.Text>{palette.label}</Typography.Text>
-            <Typography.Text type="secondary" style={{ fontSize: 11 }}>
+            <Typography.Text type="secondary" className="app-meta-text">
               {palette.description}
             </Typography.Text>
           </Flex>

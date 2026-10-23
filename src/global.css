@@ -1,3 +1,77 @@
+/* Shared UI rhythm: pages 16px, sections 12px, controls and row content 8px. */
+:root {
+  --app-space-3: 12px;
+  --app-font-meta: 13px;
+  --app-font-section: 16px;
+  --app-font-page: 20px;
+}
+
+.app-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+@media (max-width: 767px) {
+  #pro-layout-wrapper .ant-pro-global-header-collapsed-button {
+    display: none;
+  }
+
+  #pro-layout-wrapper .ant-pro-global-header-logo-mobile {
+    display: none;
+  }
+}
+
+.app-page-title,
+.ant-pro-table .ant-pro-table-list-toolbar-title {
+  font-size: var(--app-font-page);
+  font-weight: 650;
+  letter-spacing: -0.025em;
+  line-height: 28px;
+}
+
+.app-section-title {
+  font-size: var(--app-font-section);
+  font-weight: 650;
+  line-height: 24px;
+}
+
+.app-meta-text {
+  font-size: var(--app-font-meta);
+  line-height: 18px;
+}
+
+.ant-table .ant-table-thead > tr > th {
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+.ant-table .ant-table-tbody > tr > td {
+  font-variant-numeric: tabular-nums;
+}
+
+.ant-table .ant-tag {
+  font-size: 13px;
+  line-height: 20px;
+}
+
+:where(a[href], [role="button"]):focus-visible {
+  outline: 2px solid var(--ant-color-primary);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .code-editor {
+    transition: none !important;
+  }
+}
+
 /* Scrollbar — always thin, color visible on hover */
 * {
   scrollbar-width: thin;

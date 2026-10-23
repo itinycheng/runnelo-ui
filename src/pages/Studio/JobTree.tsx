@@ -1,8 +1,8 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { ConfigProvider, Dropdown, Flex, Modal, Skeleton, Tree, message } from "antd";
+import { ConfigProvider, Flex, Modal, Skeleton, Tooltip, Tree, message } from "antd";
 import { DownOutlined, EllipsisOutlined } from "@ant-design/icons";
 import type { MenuProps, ThemeConfig, TreeDataNode } from "antd";
-import { compactMenuTheme } from "@/theme";
+import { compactMenuTheme, DATA_FONT_SIZE } from "@/theme";
 import type { MessageInstance } from "antd/es/message/interface";
 import type { TFunction } from "i18next";
 import { useTranslation } from "react-i18next";
@@ -10,20 +10,23 @@ import { useJobStore } from "@/stores/jobStore";
 import { findNodeById } from "@/utils/tree";
 import type { JobTreeNode } from "@/types/job";
 import { TaskIcon } from "@/components/TaskIcon";
-import { StatusDot } from "./StatusDot";
+import { LIFECYCLE_STATUS_COLORS } from "@/constants/lifecycleStatusColors";
+import { LIFECYCLE_LABEL_KEY } from "./lifecycle";
 import { RunStatusIcon } from "./RunStatusIcon";
 import { buildNodeMenuItems } from "./nodeMenu";
 import { performDelete } from "./performDelete";
 import { useDefinitionLifecycle } from "./useDefinitionLifecycle";
 import { TagEditModal } from "./TagEditModal";
 import { GroupEditModal } from "./GroupEditModal";
+import GroupCreateModal from "./GroupCreateModal";
+import JobTreeContextMenu from "./JobTreeContextMenu";
 import { WorkflowCreateModal } from "./WorkflowCreateModal";
 import "./JobTree.css";
 
 // ---------- constants & icons ----------
 
 // Tree density knobs — tweak these three to taste.
-const NODE_FONT_SIZE = 14; // row text size (group count uses this - 1)
+const NODE_FONT_SIZE = DATA_FONT_SIZE;
 const NODE_ROW_HEIGHT = 30; // row height == line spacing (virtual-scroll item height)
 const ICON_SIZE = 18; // leaf type-icon size
 
@@ -49,24 +52,42 @@ const jobTreeTheme: ThemeConfig = {
 
 const moreButtonStyle: React.CSSProperties = {
   fontSize: 14,
-  padding: "0 2px",
+  width: 28,
+  height: 28,
+  padding: 0,
   cursor: "pointer",
   color: "var(--ant-color-text-tertiary)",
-  opacity: 0,
-  transition: "opacity 0.15s",
+  background: "transparent",
+  border: 0,
 };
 
-/** Fixed-width slot so status indicators line up into columns across rows. */
-const slotStyle = (width: number): React.CSSProperties => ({
-  width,
-  flexShrink: 0,
-  display: "inline-flex",
-  alignItems: "center",
-  justifyContent: "center",
-});
+function menuPosition(event: React.MouseEvent): { x: number; y: number } {
+  if (event.detail !== 0) return { x: event.clientX, y: event.clientY };
+  const bounds = event.currentTarget.getBoundingClientRect();
+  return { x: bounds.right, y: bounds.bottom };
+}
 
-function getNodeIcon(node: JobTreeNode): React.ReactNode {
-  return <TaskIcon type={node.jobType ?? node.kind} size={ICON_SIZE} />;
+function JobTreeNodeIcon({ node }: { node: JobTreeNode }) {
+  const { t } = useTranslation();
+  const type = node.jobType ?? node.kind;
+  const status = node.lifecycleStatus;
+  const statusLabel = status ? t(LIFECYCLE_LABEL_KEY[status]) : undefined;
+  const typeLabel = node.jobType ? t(`enums.JobType.${node.jobType}`) : type;
+  const icon = (
+    <TaskIcon
+      type={type}
+      size={ICON_SIZE}
+      color={status ? LIFECYCLE_STATUS_COLORS[status] : undefined}
+      label={statusLabel ? `${typeLabel} · ${statusLabel}` : typeLabel}
+    />
+  );
+  return statusLabel ? (
+    <Tooltip title={`${t("definitions.schedulingStatus")}: ${statusLabel}`}>
+      <span style={{ display: "inline-flex", width: ICON_SIZE, height: ICON_SIZE }}>{icon}</span>
+    </Tooltip>
+  ) : (
+    icon
+  );
 }
 
 // ---------- utils ----------
@@ -93,9 +114,15 @@ const JobTreeNodeTitle = React.memo(function JobTreeNodeTitle({
   count,
   onMore,
 }: JobTreeNodeTitleProps) {
+  const { t } = useTranslation();
+  const lastRunLabel =
+    node.kind === "group"
+      ? undefined
+      : `${t("jobStatus.lastRun")}: ${node.status ? t(`jobStatus.${node.status}`) : t("jobStatus.neverRun")}`;
   return (
     <Flex align="center" justify="space-between" className="job-tree-title">
       <span
+        title={lastRunLabel ? `${displayName} · ${lastRunLabel}` : displayName}
         style={{
           flex: 1,
           minWidth: 0,
@@ -107,17 +134,24 @@ const JobTreeNodeTitle = React.memo(function JobTreeNodeTitle({
       >
         {displayName}
       </span>
-      <Flex align="center" gap={4} style={{ flexShrink: 0 }}>
-        {typeof count === "number" && count > 0 ? (
-          <span style={{ fontSize: NODE_FONT_SIZE - 1, color: "var(--ant-color-text-tertiary)" }}>{count}</span>
-        ) : (
-          <>
-            <span style={slotStyle(7)}>{node.lifecycleStatus && <StatusDot status={node.lifecycleStatus} />}</span>
-            <span style={slotStyle(12)}>{node.kind !== "group" && <RunStatusIcon status={node.status} />}</span>
-          </>
-        )}
-        <EllipsisOutlined className="job-tree-more" style={moreButtonStyle} onClick={(e) => onMore(e, node)} />
-      </Flex>
+      <span className="job-tree-trailing">
+        <span className="job-tree-trailing-status">
+          {typeof count === "number" && count > 0 ? (
+            <span style={{ fontSize: NODE_FONT_SIZE - 1, color: "var(--ant-color-text-tertiary)" }}>{count}</span>
+          ) : node.kind !== "group" ? (
+            <RunStatusIcon status={node.status} />
+          ) : null}
+        </span>
+        <button
+          type="button"
+          className="job-tree-more"
+          style={moreButtonStyle}
+          aria-label={`${t("common.operation")}: ${displayName}`}
+          onClick={(e) => onMore(e, node)}
+        >
+          <EllipsisOutlined aria-hidden />
+        </button>
+      </span>
     </Flex>
   );
 });
@@ -262,11 +296,11 @@ function buildDeleteContent(node: JobTreeNode, t: (k: string, opts?: Record<stri
 function useJobTreeActions({ messageApi }: { messageApi: MessageInstance }) {
   const { t } = useTranslation();
   const addNode = useJobStore((s) => s.addNode);
-  const createGroup = useJobStore((s) => s.createGroup);
   const createWorkflow = useJobStore((s) => s.createWorkflow);
   const deleteNode = useJobStore((s) => s.deleteNode);
   const [workflowParentId, setWorkflowParentId] = useState<string | null>(null);
   const [creatingWorkflow, setCreatingWorkflow] = useState(false);
+  const [groupParentId, setGroupParentId] = useState<string | null>(null);
 
   const handleAddWorkflow = useCallback((parentId: string) => setWorkflowParentId(parentId), []);
   const handleCreateWorkflow = useCallback(
@@ -287,10 +321,7 @@ function useJobTreeActions({ messageApi }: { messageApi: MessageInstance }) {
     (parentId: string) => addNode({ id: generateId("task"), name: t("workflow.newTask"), kind: "task", pid: parentId }),
     [addNode, t],
   );
-  const handleAddSubgroup = useCallback(
-    (parentId: string) => void createGroup(t("workflow.newGroup"), parentId),
-    [createGroup, t],
-  );
+  const handleAddSubgroup = useCallback((parentId: string) => setGroupParentId(parentId), []);
 
   const handleDelete = useCallback(
     (node: JobTreeNode) => {
@@ -315,6 +346,8 @@ function useJobTreeActions({ messageApi }: { messageApi: MessageInstance }) {
     creatingWorkflow,
     handleCreateWorkflow,
     closeWorkflowCreate: () => setWorkflowParentId(null),
+    groupParentId,
+    closeGroupCreate: () => setGroupParentId(null),
   };
 }
 
@@ -369,7 +402,7 @@ function useBuiltTreeData(onMore: (event: React.MouseEvent, node: JobTreeNode) =
         />
       );
       if (node.kind !== "group") {
-        return { key: node.id, title, icon: getNodeIcon(node), isLeaf: true };
+        return { key: node.id, title, icon: <JobTreeNodeIcon node={node} />, isLeaf: true };
       }
       // Show the expand arrow before children are fetched; map them once loaded.
       const loaded = loadedGroups.has(node.id) || Boolean(node.children?.length);
@@ -446,7 +479,7 @@ export default function JobTree({
   const onMore = useCallback(
     (event: React.MouseEvent, node: JobTreeNode) => {
       event.stopPropagation();
-      setContextMenu({ visible: true, x: event.clientX, y: event.clientY, node });
+      setContextMenu({ visible: true, ...menuPosition(event), node });
     },
     [setContextMenu],
   );
@@ -477,22 +510,21 @@ export default function JobTree({
           />
         </Skeleton>
       </div>
-      {contextMenu.visible && contextMenu.node && (
-        <Dropdown
-          open
-          menu={{
-            items: getMenuItems(contextMenu.node),
-            onClick: ({ key }) => {
-              handleMenuAction(key, contextMenu.node!);
-              setContextMenu((prev) => ({ ...prev, visible: false }));
-            },
-          }}
-        >
-          <div style={{ position: "fixed", left: contextMenu.x, top: contextMenu.y, width: 1, height: 1 }} />
-        </Dropdown>
-      )}
+      <JobTreeContextMenu
+        state={contextMenu}
+        getMenuItems={getMenuItems}
+        onAction={(key, node) => {
+          handleMenuAction(key, node);
+          setContextMenu((prev) => ({ ...prev, visible: false }));
+        }}
+      />
       <LifecycleModals lifecycle={lifecycle} />
       <GroupRenameModal node={renameNode} onClose={() => setRenameNode(null)} />
+      <GroupCreateModal
+        open={!!actions.groupParentId}
+        parentId={actions.groupParentId ?? ""}
+        onClose={actions.closeGroupCreate}
+      />
       <WorkflowCreateModal
         open={!!actions.workflowParentId}
         confirmLoading={actions.creatingWorkflow}

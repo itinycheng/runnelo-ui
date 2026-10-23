@@ -1,6 +1,7 @@
 import { http } from "@/utils/request";
 import type { LegacyStatusCountDto } from "@/api/legacy/contracts";
 import { formatLegacyDateTime } from "@/api/legacy/date";
+import { ENABLE_MOCK } from "@/config";
 
 const FAILED_STATUSES = ["FAILURE", "KILLED", "ABNORMAL", "ERROR", "NOT_EXIST", "EXPECTED_FAILURE"] as const;
 const RUNNING_STATUSES = ["SUBMITTED", "RUNNING", "CREATED", "KILLING", "WAITING"] as const;
@@ -39,8 +40,11 @@ export function getStats(): Promise<DashboardStats> {
     });
 }
 
-export function getTrend(_range: string): Promise<TrendDataPoint[]> {
+export function getTrend(range: string): Promise<TrendDataPoint[]> {
+  if (import.meta.env.DEV && ENABLE_MOCK) {
+    return http.get<TrendDataPoint[]>("/dashboard/trend", { params: { range } });
+  }
   // The deployed backend provides aggregate status counts but no daily trend
-  // endpoint. Do not fabricate data or issue 7–30 requests to emulate it.
+  // endpoint. Keep live data empty rather than fabricate production metrics.
   return Promise.resolve([]);
 }

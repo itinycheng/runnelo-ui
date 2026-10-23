@@ -1,6 +1,6 @@
 import { useMemo, useRef, useState } from "react";
 import { Button, Form, Input, Modal, Select, Tag, message, type FormInstance } from "antd";
-import { ClearOutlined, DeleteOutlined, EditOutlined, PlusOutlined } from "@ant-design/icons";
+import { ClearOutlined, DeleteOutlined, EditOutlined, PlusOutlined, SettingOutlined } from "@ant-design/icons";
 import { ProTable, type ActionType, type ProColumns } from "@ant-design/pro-components";
 import { useTranslation } from "react-i18next";
 import type { TFunction } from "i18next";
@@ -198,21 +198,21 @@ function useSysConfigColumns(
 ): ProColumns<SysConfig>[] {
   return useMemo(
     () => [
-      { title: t("common.name"), dataIndex: "name", key: "name", ellipsis: true },
+      { title: t("common.name"), dataIndex: "name", key: "name", width: 170, ellipsis: true, fixed: "left" },
       {
         title: t("common.type"),
         dataIndex: "type",
         key: "type",
-        width: 100,
-        hideInSearch: true,
+        width: 110,
+        search: false,
         render: () => <SysConfigTypeTag />,
       },
-      { title: t("sysConfig.version"), dataIndex: "version", key: "version", width: 120, hideInSearch: true },
+      { title: t("sysConfig.version"), dataIndex: "version", key: "version", width: 80, search: false },
       {
         title: t("common.status"),
         dataIndex: "status",
         key: "status",
-        width: 110,
+        width: 100,
         valueType: "select",
         valueEnum: {
           ENABLE: { text: t("enums.Status.ENABLE") },
@@ -221,15 +221,29 @@ function useSysConfigColumns(
         },
         render: (_, record) => <SysConfigStatusTag status={record.status} />,
       },
-      { title: t("sysConfig.commandPath"), dataIndex: ["config", "commandPath"], hideInSearch: true, ellipsis: true },
-      { title: t("common.description"), dataIndex: "description", hideInSearch: true, ellipsis: true },
-      { title: t("common.updatedAt"), dataIndex: "updatedAt", width: 180, hideInSearch: true },
+      {
+        title: t("sysConfig.commandPath"),
+        dataIndex: ["config", "commandPath"],
+        width: 200,
+        search: false,
+        ellipsis: true,
+      },
+      { title: t("common.description"), dataIndex: "description", width: 220, search: false, ellipsis: true },
+      {
+        title: t("common.updatedAt"),
+        dataIndex: "updatedAt",
+        valueType: "dateTime",
+        width: 180,
+        search: false,
+      },
       ...(canManage
         ? [
             {
               title: t("common.operation"),
               key: "action",
-              width: 140,
+              width: 110,
+              fixed: "right",
+              search: false,
               render: (_: unknown, record: SysConfig) => (
                 <SysConfigActions
                   record={record}
@@ -255,20 +269,40 @@ export default function SysConfigList() {
   return (
     <div data-testid="sysconfig-list">
       <ProTable<SysConfig>
-        headerTitle={t("sysConfig.title")}
+        headerTitle={
+          <h1 className="app-page-title" style={{ margin: 0 }}>
+            {t("sysConfig.title")}
+          </h1>
+        }
         actionRef={crud.actionRef}
         rowKey="id"
         columns={columns}
-        search={{ labelWidth: "auto" }}
-        toolBarRender={() =>
-          canManage
+        search={{ filterType: "light" }}
+        options={{
+          reload: false,
+          density: false,
+          setting: {
+            draggable: false,
+            children: (
+              <Button type="text" aria-label={t("common.columnSettings")} icon={<SettingOutlined aria-hidden />} />
+            ),
+          },
+        }}
+        columnsState={{ defaultValue: { name: { fixed: "left" }, action: { fixed: "right", disable: true } } }}
+        tableLayout="fixed"
+        scroll={{ x: 1170 }}
+        toolBarRender={() => [
+          <Button key="refresh" onClick={() => void crud.actionRef.current?.reload()}>
+            {t("common.refresh")}
+          </Button>,
+          ...(canManage
             ? [
                 <Button key="add" type="primary" icon={<PlusOutlined />} onClick={crud.handleAdd}>
                   {t("sysConfig.add")}
                 </Button>,
               ]
-            : []
-        }
+            : []),
+        ]}
         request={async (params) => {
           const result = await getSysConfigs({
             page: params.current ?? 1,

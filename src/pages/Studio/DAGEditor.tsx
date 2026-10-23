@@ -4,7 +4,6 @@ import { Empty, Flex, message, Typography } from "antd";
 import { useNodesState, useEdgesState, type Connection, type ReactFlowInstance } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import { useTranslation } from "react-i18next";
-import { useJobStore } from "@/stores/jobStore";
 import { useThemeStore } from "@/stores/themeStore";
 import { FlowCanvas } from "@/components/FlowCanvas";
 import { appendStatusEdge } from "@/components/FlowCanvas/constants";
@@ -23,14 +22,13 @@ import { TaskSidebar } from "./DAGEditor.sidebar";
 // The editor coordinates several small hooks; splitting the JSX orchestration
 // would obscure their shared canvas state without reducing component complexity.
 // eslint-disable-next-line max-lines-per-function
-export default function DAGEditor({ embedded = false }: DAGEditorProps) {
+export default function DAGEditor({ embedded = false, workflowId: embeddedWorkflowId }: DAGEditorProps) {
   const { id: routeId } = useParams<{ id: string }>();
-  const selectedNode = useJobStore((s) => s.selectedNode);
   const themePreset = useThemeStore((s) => s.preset);
   const [messageApi, contextHolder] = message.useMessage();
   const { t } = useTranslation();
 
-  const workflowId = embedded ? (selectedNode?.id ?? "wf") : (routeId ?? "wf");
+  const workflowId = String((embedded ? embeddedWorkflowId : routeId) ?? "");
   const initialNodes = useMemo(() => getInitialNodes(workflowId, t), [workflowId, t]);
   const initialEdges = useMemo(() => getInitialEdges(workflowId), [workflowId]);
 

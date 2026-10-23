@@ -8,13 +8,13 @@ import hiveIcon from "@/assets/hive.svg";
 import flowIcon from "@/assets/flow.svg";
 import dependIcon from "@/assets/depend.svg";
 import joinIcon from "@/assets/join.svg";
+import { TASK_TYPE_ICON_COLORS, TASK_TYPE_ICON_FALLBACK_COLOR } from "@/constants/taskTypeIconColors";
 import React from "react";
 
 /**
- * Single source of truth for task/workflow icons: each type maps to its glyph
- * and a brand color. Every render site (tree, tabs, DAG nodes, palette) draws
- * through {@link TaskIcon}, so icons are always colored and stay consistent —
- * no per-context CSS filters, no black-gray fallbacks.
+ * Single source of truth for task/workflow glyphs. Default type colors come
+ * from TASK_TYPE_ICON_COLORS; surfaces such as the tree may override the color
+ * when it represents a different, explicitly labeled state.
  */
 export interface TaskIconDef {
   color: string;
@@ -22,21 +22,21 @@ export interface TaskIconDef {
 }
 
 export const TASK_ICON_REGISTRY: Record<string, TaskIconDef> = {
-  FLINK_SQL: { color: "#e6526f", src: flinkIcon },
-  FLINK_JAR: { color: "#e6526f", src: flinkIcon },
-  COMMON_JAR: { color: "#6f42c1", src: joinIcon },
-  CLICKHOUSE_SQL: { color: "#e8a317", src: sqlIcon },
-  MYSQL_SQL: { color: "#2f6fdb", src: sqlIcon },
-  HIVE_SQL: { color: "#e8a317", src: hiveIcon },
-  SHELL: { color: "#2e9e4f", src: shellIcon },
-  CONDITION: { color: "#d48806", src: joinIcon },
-  DEPENDENT: { color: "#13a8a8", src: dependIcon },
-  SUB_FLOW: { color: "var(--ant-color-primary)", src: flowIcon },
-  workflow: { color: "var(--ant-color-primary)", src: flowIcon },
-  group: { color: "#8c8c8c", src: flowIcon },
+  FLINK_SQL: { color: TASK_TYPE_ICON_COLORS.FLINK_SQL, src: flinkIcon },
+  FLINK_JAR: { color: TASK_TYPE_ICON_COLORS.FLINK_JAR, src: flinkIcon },
+  COMMON_JAR: { color: TASK_TYPE_ICON_COLORS.COMMON_JAR, src: joinIcon },
+  CLICKHOUSE_SQL: { color: TASK_TYPE_ICON_COLORS.CLICKHOUSE_SQL, src: sqlIcon },
+  MYSQL_SQL: { color: TASK_TYPE_ICON_COLORS.MYSQL_SQL, src: sqlIcon },
+  HIVE_SQL: { color: TASK_TYPE_ICON_COLORS.HIVE_SQL, src: hiveIcon },
+  SHELL: { color: TASK_TYPE_ICON_COLORS.SHELL, src: shellIcon },
+  CONDITION: { color: TASK_TYPE_ICON_COLORS.CONDITION, src: joinIcon },
+  DEPENDENT: { color: TASK_TYPE_ICON_COLORS.DEPENDENT, src: dependIcon },
+  SUB_FLOW: { color: TASK_TYPE_ICON_COLORS.SUB_FLOW, src: flowIcon },
+  workflow: { color: TASK_TYPE_ICON_COLORS.workflow, src: flowIcon },
+  group: { color: TASK_TYPE_ICON_COLORS.group, src: flowIcon },
 };
 
-const FALLBACK: TaskIconDef = { color: "var(--ant-color-primary)", src: flowIcon };
+const FALLBACK: TaskIconDef = { color: TASK_TYPE_ICON_FALLBACK_COLOR, src: flowIcon };
 
 /** Resolve a type key to its icon (exact, case-insensitive on the key). */
 export function getTaskIcon(type: string | undefined | null): TaskIconDef {
@@ -50,6 +50,8 @@ export interface TaskIconProps {
   size?: number;
   /** Override the registry color (defaults to the type's brand color). */
   color?: string;
+  /** Accessible label when the color carries extra meaning in this context. */
+  label?: string;
   style?: React.CSSProperties;
 }
 
@@ -57,7 +59,7 @@ export interface TaskIconProps {
  * Colorizes a monochrome SVG via CSS mask, so a single color value drives the
  * glyph regardless of the source SVG's own fill.
  */
-export function TaskIcon({ type, size = 16, color, style }: TaskIconProps) {
+export function TaskIcon({ type, size = 16, color, label, style }: TaskIconProps) {
   const def = getTaskIcon(type);
   // Quote the URL: Vite inlines small SVGs as data: URIs whose raw quotes/commas
   // break an unquoted url() and silently drop the mask. Longhand props avoid the
@@ -66,7 +68,7 @@ export function TaskIcon({ type, size = 16, color, style }: TaskIconProps) {
   return (
     <span
       role="img"
-      aria-label={type ?? "task"}
+      aria-label={label ?? type ?? "task"}
       style={{
         display: "inline-block",
         width: size,

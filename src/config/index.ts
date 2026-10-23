@@ -31,3 +31,6 @@ export const API_MODE = import.meta.env.VITE_API_MODE || "mock";
 
 /** Whether to start MSW request mocking (development only). Active only in "mock" mode. */
 export const ENABLE_MOCK = API_MODE === "mock";
+
+/** The development mock exposes definition folders; the legacy backend does not. */
+export const USE_MOCK_DEFINITION_GROUPS = import.meta.env.DEV && ENABLE_MOCK;

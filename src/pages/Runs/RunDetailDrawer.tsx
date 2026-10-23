@@ -30,7 +30,7 @@ const preStyle: React.CSSProperties = {
   background: "var(--ant-color-fill-quaternary)",
   padding: 12,
   borderRadius: "var(--ant-border-radius)",
-  fontSize: 12,
+  fontSize: 13,
   margin: 0,
   maxHeight: 360,
   overflow: "auto",

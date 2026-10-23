@@ -1,6 +1,85 @@
-.job-tree-wrapper .ant-tree-node-content-wrapper:hover .job-tree-more,
-.job-tree-wrapper .ant-tree-treenode-selected .job-tree-more {
-  opacity: 1 !important;
+.job-tree-trailing {
+  position: relative;
+  display: inline-flex;
+  width: 28px;
+  height: 28px;
+  flex-shrink: 0;
+}
+
+.job-tree-trailing-status,
+.job-tree-wrapper .job-tree-more {
+  position: absolute;
+  inset: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.job-tree-trailing-status {
+  transition: opacity 0.15s;
+}
+
+.job-tree-wrapper .job-tree-more {
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s;
+}
+
+.job-tree-wrapper .ant-tree-treenode:hover .job-tree-more,
+.job-tree-wrapper .ant-tree-treenode-selected .job-tree-more,
+.job-tree-wrapper .job-tree-more:focus-visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.job-tree-wrapper .ant-tree-treenode:hover .job-tree-trailing-status,
+.job-tree-wrapper .ant-tree-treenode-selected .job-tree-trailing-status,
+.job-tree-wrapper .job-tree-trailing:focus-within .job-tree-trailing-status {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.job-tree-wrapper .job-tree-more:focus-visible {
+  outline: 2px solid var(--ant-color-primary);
+  outline-offset: -2px;
+}
+
+@media (hover: none) {
+  .job-tree-trailing {
+    width: auto;
+    gap: 4px;
+  }
+
+  .job-tree-trailing-status,
+  .job-tree-wrapper .job-tree-more {
+    position: static;
+  }
+
+  .job-tree-trailing-status {
+    min-width: 16px;
+    opacity: 1 !important;
+    pointer-events: auto !important;
+  }
+
+  .job-tree-wrapper .job-tree-more {
+    opacity: 1;
+    pointer-events: auto;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .job-tree-wrapper .job-tree-more {
+    transition: none;
+  }
+
+  .job-tree-trailing-status {
+    transition: none;
+  }
+
+  .studio-run-status-icon.anticon-spin,
+  .studio-run-status-icon.anticon-spin svg {
+    animation: none !important;
+  }
 }
 
 .job-tree-wrapper .ant-tree-node-content-wrapper {
@@ -8,4 +87,9 @@
   align-items: center !important;
   width: 100%;
   min-width: 0;
+}
+
+.job-tree-wrapper .ant-tree-switcher-icon {
+  position: relative;
+  z-index: 1;
 }

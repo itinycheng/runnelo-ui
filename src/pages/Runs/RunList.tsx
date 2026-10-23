@@ -1,5 +1,6 @@
 import { useState, useCallback, useMemo } from "react";
-import { Alert, Button, Popconfirm, Space, Tag, message } from "antd";
+import { Alert, Button, Popconfirm, Space, Tag, Typography, message } from "antd";
+import { SettingOutlined } from "@ant-design/icons";
 import { useTranslation } from "react-i18next";
 import type { TFunction } from "i18next";
 import { useSearchParams } from "react-router-dom";
@@ -113,15 +114,52 @@ function runsTableLocale(query: RunsQuery, t: TFunction) {
   };
 }
 
+function RunActions({
+  record,
+  onOpenDetail,
+  onKill,
+}: {
+  record: FlowRun;
+  onOpenDetail: (id: string) => void;
+  onKill: (id: string) => void;
+}) {
+  const { t } = useTranslation();
+  return (
+    <Space size={8} style={{ whiteSpace: "nowrap" }}>
+      <Button type="link" size="small" style={{ paddingInline: 4 }} onClick={() => onOpenDetail(record.id)}>
+        {t("runs.detailAction")}
+      </Button>
+      {execIsRunning(record.status) && (
+        <Popconfirm
+          title={t("runs.killConfirm")}
+          onConfirm={() => onKill(record.id)}
+          okText={t("common.ok")}
+          cancelText={t("common.cancel")}
+        >
+          <Button type="link" size="small" danger style={{ paddingInline: 4 }}>
+            {t("runs.killAction")}
+          </Button>
+        </Popconfirm>
+      )}
+    </Space>
+  );
+}
+
 function useRunColumns(openDetail: (id: string) => void, onKill: (id: string) => void) {
   const { t } = useTranslation();
   return useMemo<ProColumns<FlowRun>[]>(
     () => [
-      { title: t("common.name"), dataIndex: "name", ellipsis: true },
+      {
+        title: t("common.name"),
+        dataIndex: "name",
+        width: 260,
+        ellipsis: true,
+        fixed: "left",
+      },
       {
         title: t("runs.type"),
         dataIndex: "type",
-        width: 110,
+        width: 120,
         valueType: "select",
         valueEnum: buildTypeEnum(t),
         render: (_, row) => <Tag color={enumColor(row.type)}>{typeLabel(row.type, t)}</Tag>,
@@ -134,39 +172,66 @@ function useRunColumns(openDetail: (id: string) => void, onKill: (id: string) =>
         valueEnum: buildStatusEnum(t),
         render: (_, row) => <RunStatusTag status={row.status} />,
       },
-      { title: t("runs.startTime"), dataIndex: "startTime", valueType: "dateTime", search: false, width: 170 },
+      {
+        title: t("runs.startTime"),
+        dataIndex: "startTime",
+        valueType: "dateTime",
+        search: false,
+        width: 180,
+      },
       {
         title: t("runs.duration"),
         dataIndex: "duration",
         search: false,
-        width: 100,
+        width: 105,
         render: (_, row) => formatDuration(row.duration),
       },
-      { title: t("runs.owner"), dataIndex: "submitter", search: false, width: 140 },
+      { title: t("runs.owner"), dataIndex: "submitter", search: false, width: 120, ellipsis: true },
+      {
+        title: t("runs.endTime"),
+        dataIndex: "endTime",
+        valueType: "dateTime",
+        search: false,
+        width: 180,
+      },
+      {
+        title: t("runs.tags"),
+        dataIndex: "tags",
+        search: false,
+        width: 180,
+        ellipsis: true,
+        render: (_, row) => row.tags?.join(", ") || "-",
+      },
+      {
+        title: t("runs.flowId"),
+        dataIndex: "flowId",
+        search: false,
+        width: 180,
+        ellipsis: true,
+      },
       { title: t("runs.startTime"), dataIndex: "startRange", valueType: "dateTimeRange", hideInTable: true },
       {
         title: t("common.operation"),
+        key: "actions",
         valueType: "option",
-        width: 130,
-        render: (_, record) => (
-          <Space>
-            <a onClick={() => openDetail(record.id)}>{t("runs.detail")}</a>
-            {execIsRunning(record.status) && (
-              <Popconfirm
-                title={t("runs.killConfirm")}
-                onConfirm={() => onKill(record.id)}
-                okText={t("common.ok")}
-                cancelText={t("common.cancel")}
-              >
-                <a style={{ color: "var(--ant-color-error)" }}>{t("runs.kill")}</a>
-              </Popconfirm>
-            )}
-          </Space>
-        ),
+        width: 140,
+        fixed: "right",
+        render: (_, record) => <RunActions record={record} onOpenDetail={openDetail} onKill={onKill} />,
       },
     ],
     [t, openDetail, onKill],
   );
+}
+
+function runTableOptions(t: TFunction) {
+  return {
+    reload: false,
+    density: false,
+    setting: {
+      draggable: false,
+      children: <Button type="text" aria-label={t("common.columnSettings")} icon={<SettingOutlined aria-hidden />} />,
+    },
+  };
 }
 
 export default function RunList() {
@@ -189,13 +254,36 @@ export default function RunList() {
     <div data-testid="run-list">
       <RunsRefreshError query={runs.query} />
       <ProTable<FlowRun>
-        headerTitle={t("runs.title")}
+        headerTitle={
+          <Space align="baseline" size={12}>
+            <h1 className="app-page-title" style={{ margin: 0 }}>
+              {t("runs.title")}
+            </h1>
+            {runs.query.data && (
+              <Typography.Text type="secondary" className="app-meta-text">
+                {t("common.totalCount", { count: runs.query.data.total })}
+              </Typography.Text>
+            )}
+          </Space>
+        }
         rowKey="id"
         columns={columns}
         dataSource={runs.query.data?.data ?? []}
         loading={runs.query.isFetching && !isInitialLoadFailed(runs.query)}
         locale={runsTableLocale(runs.query, t)}
-        options={{ reload: false, density: false, setting: false }}
+        search={{ filterType: "light" }}
+        options={runTableOptions(t)}
+        columnsState={{
+          persistenceKey: "runnelo-runs-columns-v1",
+          persistenceType: "localStorage",
+          defaultValue: {
+            endTime: { show: false },
+            tags: { show: false },
+            flowId: { show: false },
+            actions: { fixed: "right", disable: true },
+          },
+        }}
+        scroll={{ x: "max-content" }}
         form={{
           initialValues: {
             status: searchParams.get("status") ?? undefined,

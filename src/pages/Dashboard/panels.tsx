@@ -1,4 +1,4 @@
-import { Card, Empty, Flex, Spin, Tag, Typography } from "antd";
+import { Button, Card, Empty, Flex, Spin, Tag, Typography } from "antd";
 import { ResponsiveContainer, PieChart, Pie, Cell, Tooltip, Legend } from "recharts";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router-dom";
@@ -12,18 +12,26 @@ import { useQuery } from "@tanstack/react-query";
 import { useWorkspaceStore } from "@/stores/workspaceStore";
 import { queryKeys } from "@/api/queryKeys";
 import { enumColor, executionStatusVisualColor, STATUS_TOKEN_COLOR } from "@/utils/statusColor";
+import { SECTION_GAP } from "@/constants/layout";
 
 function CardHeader({ title, onViewAll }: { title: string; onViewAll?: () => void }) {
   const { t } = useTranslation();
   return (
-    <Flex justify="space-between" align="center" style={{ marginBottom: 12 }}>
-      <Typography.Text strong style={{ fontSize: 15 }}>
+    <Flex justify="space-between" align="center" style={{ marginBottom: SECTION_GAP }}>
+      <h2 className="app-section-title" style={{ margin: 0 }}>
         {title}
-      </Typography.Text>
+      </h2>
       {onViewAll && (
-        <Typography.Link style={{ fontSize: 13 }} onClick={onViewAll}>
+        <Button
+          type="link"
+          size="small"
+          className="app-meta-text"
+          style={{ paddingInline: 0 }}
+          aria-label={`${t("dashboard.viewAll")} ${title}`}
+          onClick={onViewAll}
+        >
           {t("dashboard.viewAll")}
-        </Typography.Link>
+        </Button>
       )}
     </Flex>
   );
@@ -59,19 +67,25 @@ export function StatusDonut({ stats }: { stats: DashboardStats | null }) {
 
   return (
     <Card
+      size="small"
       style={{ height: "100%" }}
       styles={{ body: { height: "100%", minHeight: 0, display: "flex", flexDirection: "column" } }}
     >
       <CardHeader title={t("dashboard.statusBreakdown")} />
-      <div className="dashboard-chart" style={{ position: "relative" }}>
+      <div
+        className="dashboard-chart"
+        style={{ position: "relative" }}
+        role="img"
+        aria-label={`${t("dashboard.statusBreakdown")}: ${success} ${t("dashboard.successTasks")}, ${failed} ${t("dashboard.failedTasks")}, ${running} ${t("dashboard.runningTasks")}. ${rate}% ${t("dashboard.successRate")}.`}
+      >
         <ResponsiveContainer width="100%" height="100%">
           <PieChart>
             <Pie
               data={data}
               dataKey="value"
               nameKey="name"
-              innerRadius={64}
-              outerRadius={88}
+              innerRadius="58%"
+              outerRadius="80%"
               paddingAngle={2}
               onClick={(d: { payload?: DonutSlice }) =>
                 d.payload?.status && navigate(`/runs?status=${d.payload.status}`)
@@ -90,8 +104,8 @@ export function StatusDonut({ stats }: { stats: DashboardStats | null }) {
           align="center"
           style={{ position: "absolute", inset: 0, top: -24, justifyContent: "center", pointerEvents: "none" }}
         >
-          <Typography.Text style={{ fontSize: 30, fontWeight: 600, lineHeight: 1 }}>{rate}%</Typography.Text>
-          <Typography.Text type="secondary" style={{ fontSize: 12 }}>
+          <Typography.Text style={{ fontSize: 30, fontWeight: 650, lineHeight: 1 }}>{rate}%</Typography.Text>
+          <Typography.Text type="secondary" className="app-meta-text">
             {t("dashboard.successRate")}
           </Typography.Text>
         </Flex>
@@ -121,7 +135,7 @@ export function RunListCard({ status, title, emptyText }: RunListCardProps) {
   const { t } = useTranslation();
   const navigate = useNavigate();
   const workspaceId = useWorkspaceStore((state) => state.currentId);
-  const params = { page: 1, pageSize: 4, statuses: STATUS_BUCKETS[status] };
+  const params = { page: 1, pageSize: 5, statuses: STATUS_BUCKETS[status] };
   const { data, isPending: loading } = useQuery({
     queryKey: queryKeys.runs.list(workspaceId, params),
     queryFn: () => getFlowRuns(params),
@@ -132,8 +146,9 @@ export function RunListCard({ status, title, emptyText }: RunListCardProps) {
 
   return (
     <Card
+      size="small"
       style={{ height: "100%" }}
-      styles={{ body: { height: "100%", minHeight: 0, display: "flex", flexDirection: "column" } }}
+      styles={{ body: { height: "100%", display: "flex", flexDirection: "column" } }}
     >
       <CardHeader title={title} onViewAll={() => navigate(`/runs?status=${status}`)} />
       {loading ? (
@@ -143,7 +158,7 @@ export function RunListCard({ status, title, emptyText }: RunListCardProps) {
       ) : items.length === 0 ? (
         <Empty image={Empty.PRESENTED_IMAGE_SIMPLE} description={emptyText} style={{ padding: "24px 0" }} />
       ) : (
-        <Flex vertical style={{ minHeight: 0, overflow: "hidden" }}>
+        <Flex vertical justify="space-between" style={{ flex: 1, minHeight: 0 }}>
           {items.map((run, i) => (
             <Flex
               key={run.id}
@@ -161,7 +176,7 @@ export function RunListCard({ status, title, emptyText }: RunListCardProps) {
                 </Typography.Text>
                 <RunStatusTag status={run.status} />
               </Flex>
-              <Typography.Text type="secondary" style={{ fontSize: 12, flexShrink: 0 }}>
+              <Typography.Text type="secondary" className="app-meta-text" style={{ flexShrink: 0 }}>
                 {status === "RUNNING" ? t("dashboard.running") : formatDuration(run.duration)}
               </Typography.Text>
             </Flex>

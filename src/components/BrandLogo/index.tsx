@@ -34,10 +34,7 @@ export default function BrandLogo({ preset, height = 28, className, style }: Bra
         style={{ display: "block", flexShrink: 0, mixBlendMode: "difference" }}
       />
     ) : (
-      <span
-        aria-hidden
-        style={{ ...colorMask(WORDMARK_PATH, palette.brand), width: wordmarkWidth, height }}
-      />
+      <span aria-hidden style={{ ...colorMask(WORDMARK_PATH, palette.brand), width: wordmarkWidth, height }} />
     );
 
   return (

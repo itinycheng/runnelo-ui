@@ -32,9 +32,9 @@
   border-radius: 4px;
   background: color-mix(in srgb, var(--environment-color) 10%, var(--ant-color-bg-container));
   color: var(--ant-color-text);
-  font-size: 11px;
+  font-size: var(--app-font-meta);
   font-weight: 700;
-  line-height: 17px;
+  line-height: 18px;
   text-overflow: ellipsis;
   white-space: nowrap;
 }

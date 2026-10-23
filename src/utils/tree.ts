@@ -86,6 +86,7 @@ export function insertChild(tree: JobTreeNode[], parentId: string, child: JobTre
   return updateNodeById(tree, parentId, (parent) => ({
     ...parent,
     children: [...(parent.children ?? []), child],
+    childCount: parent.childCount == null ? undefined : parent.childCount + 1,
   }));
 }
 

@@ -23,7 +23,7 @@
 
 .react-flow__node:hover:not(.selected) {
   box-shadow:
-    0 0 0 1.5px var(--ant-color-primary-hover),
+    0 0 0 2px var(--ant-color-primary-hover),
     0 1px 4px color-mix(in srgb, var(--ant-color-primary) 15%, transparent);
   transition: box-shadow 0.2s ease;
 }
@@ -39,4 +39,18 @@
 .react-flow__node:hover .react-flow__handle,
 .react-flow__node.selected .react-flow__handle {
   opacity: 1 !important;
+}
+
+.react-flow__handle:focus-visible {
+  opacity: 1 !important;
+  outline: 2px solid var(--ant-color-primary);
+  outline-offset: 1px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .react-flow__node,
+  .react-flow__handle,
+  .react-flow__edge-path {
+    transition: none !important;
+  }
 }

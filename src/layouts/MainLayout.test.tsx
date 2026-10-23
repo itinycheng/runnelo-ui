@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { render } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import { MemoryRouter, Routes, Route } from "react-router-dom";
 import MainLayout from "./MainLayout";
 import { useAuthStore, useAuthPermissions } from "@/stores/authStore";
@@ -64,5 +64,15 @@ describe("MainLayout", () => {
     renderLayout();
 
     expect(loadUserInfo).not.toHaveBeenCalled();
+  });
+
+  it("keeps the desktop header navigation visible", async () => {
+    vi.mocked(useAuthStore).mockImplementation((selector) =>
+      selector({ isAuthenticated: false, user: null, loadUserInfo } as never),
+    );
+
+    renderLayout();
+
+    expect(await screen.findByRole("link", { name: /Dashboard/ })).toBeInTheDocument();
   });
 });

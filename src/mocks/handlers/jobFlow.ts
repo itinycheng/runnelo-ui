@@ -1,13 +1,12 @@
 import { http as mswHttp, delay, type RequestHandler } from "msw";
 import { fail, ok } from "@/mocks/lib/response";
-import { jobTreeStore, recordPlacement } from "@/mocks/data/jobTree";
+import { jobTreeStore, nextDefinitionRef, recordPlacement } from "@/mocks/data/jobTree";
 import { ensureMockJobsForFlow } from "@/mocks/handlers/job";
 import type { JobFlow, JobFlowDag } from "@/types/entities";
 import { ipage, parsePageSize } from "@/mocks/lib/page";
 
 // In-memory store, mirrors the backend /jobFlow endpoints for mock-only dev.
 const store = new Map<number, JobFlow>();
-let seq = 2000;
 
 function numId(idParam: string): number {
   return Number(idParam);
@@ -88,11 +87,11 @@ export const jobFlowHandlers: RequestHandler[] = [
   mswHttp.post("/api/jobFlow/create", async ({ request }) => {
     await delay(200);
     const { groupId, ...body } = (await request.json()) as JobFlow & { groupId?: string };
-    const id = ++seq;
+    const id = nextDefinitionRef();
     store.set(id, { ...body, id, status: "OFFLINE" });
     if (groupId) {
       recordPlacement({
-        id: String(id),
+        id: `flow:${id}`,
         name: body.name,
         kind: "workflow",
         refId: id,
@@ -122,7 +121,7 @@ export const jobFlowHandlers: RequestHandler[] = [
   mswHttp.get("/api/jobFlow/copy/:id", async ({ params }) => {
     await delay(200);
     const src = ensureFlow(numId(params.id as string), true);
-    const id = ++seq;
+    const id = nextDefinitionRef();
     store.set(id, { ...src, id, name: `${src.name}-copy` });
     return ok(id);
   }),
@@ -143,7 +142,7 @@ export const jobFlowHandlers: RequestHandler[] = [
 
   mswHttp.post("/api/jobFlow/schedule/runOnce/:id", async () => {
     await delay(200);
-    return ok(++seq); // fake flowRunId
+    return ok(nextDefinitionRef()); // fake flowRunId
   }),
 
   mswHttp.post("/api/jobFlow/updateFlow", async ({ request }) => {

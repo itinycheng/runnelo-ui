@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
-import { Button, Descriptions, Drawer, Tag, Typography } from "antd";
-import { CheckCircleOutlined, CloseCircleOutlined } from "@ant-design/icons";
+import { Button, Descriptions, Drawer, Space, Tag, Typography } from "antd";
+import { CheckCircleOutlined, CloseCircleOutlined, SettingOutlined } from "@ant-design/icons";
 import { ProTable, type ProColumns } from "@ant-design/pro-components";
 import { useTranslation } from "react-i18next";
 import type { AuditLog, AuditResult } from "@/types/admin";
@@ -10,6 +10,7 @@ import { queryClient } from "@/app/queryClient";
 import { queryKeys } from "@/api/queryKeys";
 import { useWorkspaceStore } from "@/stores/workspaceStore";
 import { actionColor, statusColor } from "@/utils/statusColor";
+import { replaceAuditLogFilters } from "./auditLogQuery";
 
 const ACTIONS = ["CREATE", "UPDATE", "DELETE", "LOGIN", "LOGOUT", "RUN", "ONLINE", "OFFLINE"];
 const MODULES = ["user", "resource", "workflow", "task", "datasource", "config", "tag"];
@@ -92,7 +93,8 @@ function useAuditColumns(t: ReturnType<typeof useTranslation>["t"], setDetail: (
         title: t("audit.time"),
         dataIndex: "createdAt",
         key: "createdAt",
-        width: 180,
+        width: 200,
+        ellipsis: true,
         valueType: "dateTimeRange",
         render: (_, r) => new Date(r.createdAt).toLocaleString(),
         search: {
@@ -121,7 +123,7 @@ function useAuditColumns(t: ReturnType<typeof useTranslation>["t"], setDetail: (
         valueEnum: toValueEnum(MODULES, (v) => moduleLabel(t, v)),
         render: (_, r) => moduleLabel(t, r.module),
       },
-      { title: t("audit.target"), dataIndex: "target", key: "target", width: 140, ellipsis: true, hideInSearch: true },
+      { title: t("audit.target"), dataIndex: "target", key: "target", width: 140, ellipsis: true, search: false },
       {
         title: t("audit.result"),
         dataIndex: "result",
@@ -131,12 +133,14 @@ function useAuditColumns(t: ReturnType<typeof useTranslation>["t"], setDetail: (
         valueEnum: { success: { text: t("audit.resultSuccess") }, failed: { text: t("audit.resultFailed") } },
         render: (_, r) => <AuditResultTag result={r.result} />,
       },
-      { title: t("audit.ip"), dataIndex: "ip", key: "ip", width: 130, hideInSearch: true },
+      { title: t("audit.ip"), dataIndex: "ip", key: "ip", width: 130, search: false },
       {
         title: t("audit.detail"),
         key: "action-view",
+        valueType: "option",
         width: 90,
-        hideInSearch: true,
+        fixed: "right",
+        search: false,
         render: (_, record) => (
           <Button type="link" size="small" onClick={() => setDetail(record)}>
             {t("audit.view")}
@@ -171,14 +175,47 @@ export default function AuditLogList() {
   return (
     <div data-testid="audit-log-list">
       <ProTable<AuditLog>
-        headerTitle={t("audit.title")}
+        headerTitle={
+          <Space align="baseline" size={12}>
+            <h1 className="app-page-title" style={{ margin: 0 }}>
+              {t("audit.title")}
+            </h1>
+            {query.data && (
+              <Typography.Text type="secondary" className="app-meta-text">
+                {t("common.totalCount", { count: query.data.total })}
+              </Typography.Text>
+            )}
+          </Space>
+        }
         rowKey="id"
         columns={columns}
         dataSource={query.data?.data ?? []}
         loading={query.isFetching}
-        options={false}
+        search={{ filterType: "light" }}
+        options={{
+          reload: false,
+          density: false,
+          setting: {
+            draggable: false,
+            children: (
+              <Button type="text" aria-label={t("common.columnSettings")} icon={<SettingOutlined aria-hidden />} />
+            ),
+          },
+        }}
+        columnsState={{
+          persistenceKey: "runnelo-audit-columns-v1",
+          persistenceType: "localStorage",
+          defaultValue: { "action-view": { fixed: "right", disable: true } },
+        }}
+        tableLayout="fixed"
+        scroll={{ x: "max-content" }}
+        toolBarRender={() => [
+          <Button key="refresh" onClick={() => void query.refetch()}>
+            {t("common.refresh")}
+          </Button>,
+        ]}
         onSubmit={(values) => {
-          setParams((current) => ({ ...current, ...values, page: 1 }));
+          setParams((current) => replaceAuditLogFilters(current, values));
         }}
         onReset={() => setParams({ page: 1, pageSize: params.pageSize })}
         pagination={{

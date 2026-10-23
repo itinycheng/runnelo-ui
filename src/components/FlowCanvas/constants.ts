@@ -22,10 +22,11 @@ export const EDGE_STATUS_LABELS: Record<EdgeStatus, { text: string; bg: string }
 };
 
 export const handleStyle: React.CSSProperties = {
-  width: 8,
-  height: 8,
+  width: 24,
+  height: 24,
   background: "var(--ant-color-primary)",
-  border: "2px solid var(--ant-color-bg-container)",
+  backgroundClip: "padding-box",
+  border: "8px solid transparent",
   opacity: 0,
   transition: "opacity 0.2s ease",
 };

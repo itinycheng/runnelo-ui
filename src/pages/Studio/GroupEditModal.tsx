@@ -7,9 +7,10 @@ interface GroupEditModalProps {
   /** "create" for a new group, "rename" for an existing one. */
   mode: "create" | "rename";
   initialName?: string;
+  confirmLoading?: boolean;
   /** Names of same-level groups (excluding self) used to reject duplicates. */
   siblingNames?: string[];
-  onOk: (name: string) => void;
+  onOk: (name: string) => void | Promise<void>;
   onCancel: () => void;
 }
 
@@ -24,6 +25,7 @@ export function GroupEditModal({
   open,
   mode,
   initialName = "",
+  confirmLoading = false,
   siblingNames = EMPTY,
   onOk,
   onCancel,
@@ -37,13 +39,14 @@ export function GroupEditModal({
 
   const handleOk = async () => {
     const { name } = await form.validateFields();
-    onOk(name.trim());
+    await onOk(name.trim());
   };
 
   return (
     <Modal
       title={t(mode === "create" ? "workflow.addGroup" : "workflow.renameGroup")}
       open={open}
+      confirmLoading={confirmLoading}
       onOk={handleOk}
       onCancel={onCancel}
       destroyOnHidden

@@ -6,6 +6,7 @@ import { useTranslation } from "react-i18next";
 import { type Edge, type Node } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import { FlowCanvas } from "@/components/FlowCanvas";
+import { EnvironmentWatermark } from "@/components/EnvironmentIdentity";
 import type { FlowRunGraph } from "@/types/run";
 
 interface RunFlowGraphProps {
@@ -49,7 +50,7 @@ export function RunFlowGraph({ graph, onNodeClick }: RunFlowGraphProps) {
   );
 
   if (full) {
-    // Portal to <body> so the overlay isn't clipped by the Drawer's transform.
+    // Keep the overlay outside the Drawer transform while inheriting Ant Design's CSS variables.
     return createPortal(
       <div
         style={{
@@ -61,12 +62,13 @@ export function RunFlowGraph({ graph, onNodeClick }: RunFlowGraphProps) {
         }}
       >
         {canvas}
+        <EnvironmentWatermark />
       </div>,
-      document.body,
+      document.querySelector<HTMLElement>(".ant-app") ?? document.body,
     );
   }
 
   return (
-    <div style={{ display: "flex", height: 380, border: "1px solid var(--ant-color-border-secondary)" }}>{canvas}</div>
+    <div style={{ display: "flex", height: 300, border: "1px solid var(--ant-color-border-secondary)" }}>{canvas}</div>
   );
 }

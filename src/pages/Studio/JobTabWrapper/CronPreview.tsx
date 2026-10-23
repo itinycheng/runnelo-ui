@@ -55,7 +55,7 @@ export default function CronPreview({ expression }: CronPreviewProps) {
       dataSource={runs}
       renderItem={(time) => (
         <List.Item style={{ padding: "2px 0" }}>
-          <Typography.Text style={{ fontSize: 12 }}>{time}</Typography.Text>
+          <Typography.Text className="app-meta-text">{time}</Typography.Text>
         </List.Item>
       )}
     />

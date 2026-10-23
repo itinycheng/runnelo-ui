@@ -22,6 +22,7 @@ import SchemaSidebar from "./SchemaSidebar";
 import { useQueryConsole } from "./useQueryConsole";
 import type { QueryHistoryEntry } from "./useQueryHistory";
 import { enumColor } from "@/utils/statusColor";
+import "./QueryConsole.css";
 
 function formatTime(ts: number): string {
   const d = new Date(ts);
@@ -113,8 +114,9 @@ function QueryWorkspace({
   const canExport = !!result?.success && result.rows.length > 0;
 
   return (
-    <Flex vertical style={{ height: "100%", minWidth: 0, padding: PAGE_PADDING, overflow: "auto" }}>
-      <Card size="small" variant="borderless" style={{ marginBottom: SECTION_GAP, boxShadow: "none" }}>
+    <Flex vertical className="query-workspace" style={{ padding: PAGE_PADDING, gap: SECTION_GAP }}>
+      <h1 className="app-sr-only">{t("menu.query")}</h1>
+      <Card size="small" variant="borderless" className="query-workspace__editor">
         <Toolbar
           onOpenSchema={onOpenSchema}
           running={running}
@@ -134,7 +136,7 @@ function QueryWorkspace({
           onRun={run}
         />
       </Card>
-      <Card size="small" variant="borderless" style={{ boxShadow: "none" }}>
+      <Card size="small" variant="borderless" className="query-workspace__results">
         <Flex justify="space-between" align="center" style={{ marginBottom: 8, minHeight: 24 }}>
           <ResultMeta result={result} />
           <Button
@@ -172,12 +174,13 @@ function Toolbar(props: ToolbarProps) {
     ? [
         ...props.history.map((entry, i) => ({
           key: String(i),
+          onClick: () => props.onPickHistory(entry),
           label: (
-            <Flex vertical style={{ maxWidth: 360 }} onClick={() => props.onPickHistory(entry)}>
-              <Typography.Text ellipsis style={{ fontFamily: "monospace", fontSize: 12 }}>
+            <Flex vertical style={{ maxWidth: 360 }}>
+              <Typography.Text ellipsis className="app-meta-text" style={{ fontFamily: "monospace" }}>
                 {entry.sql.replace(/\s+/g, " ")}
               </Typography.Text>
-              <Typography.Text type="secondary" style={{ fontSize: 11 }}>
+              <Typography.Text type="secondary" className="app-meta-text">
                 {formatTime(entry.ts)}
               </Typography.Text>
             </Flex>
@@ -189,7 +192,7 @@ function Toolbar(props: ToolbarProps) {
     : [{ key: "empty", label: t("query.historyEmpty"), disabled: true }];
 
   return (
-    <Flex justify="space-between" align="center" wrap gap={8} style={{ marginBottom: 12 }}>
+    <Flex justify="space-between" align="center" wrap gap={8} style={{ marginBottom: SECTION_GAP }}>
       <Space size={8}>
         {onOpenSchema && (
           <Button
@@ -201,27 +204,30 @@ function Toolbar(props: ToolbarProps) {
           />
         )}
         <CodeOutlined style={{ color: "var(--ant-color-text-tertiary)" }} />
-        <Typography.Text strong>{t("query.console")}</Typography.Text>
+        <h2 className="app-section-title" style={{ margin: 0 }}>
+          {t("query.console")}
+        </h2>
         <Tag color={enumColor("SQL")} style={{ margin: 0 }}>
           SQL
         </Tag>
       </Space>
       <Space wrap size={6}>
         <Dropdown menu={{ items: historyItems }} trigger={["click"]} placement="bottomRight">
-          <Button icon={<HistoryOutlined />} data-testid="history-button">
+          <Button icon={<HistoryOutlined aria-hidden />} aria-label={t("query.history")} data-testid="history-button">
             {t("query.history")}
           </Button>
         </Dropdown>
-        <Button icon={<ClearOutlined />} onClick={onClear}>
+        <Button icon={<ClearOutlined aria-hidden />} aria-label={t("query.clear")} onClick={onClear}>
           {t("query.clear")}
         </Button>
-        <Button icon={<FormatPainterOutlined />} onClick={onFormat}>
+        <Button icon={<FormatPainterOutlined aria-hidden />} aria-label={t("query.formatSql")} onClick={onFormat}>
           {t("query.formatSql")}
         </Button>
         <Tooltip title={t("query.runTooltip")}>
           <Button
             type="primary"
-            icon={<PlayCircleOutlined />}
+            icon={<PlayCircleOutlined aria-hidden />}
+            aria-label={t("query.run")}
             loading={running}
             onClick={onRun}
             data-testid="run-query-button"
@@ -237,17 +243,24 @@ function Toolbar(props: ToolbarProps) {
 /** One-line status summary shown above the result table. */
 function ResultMeta({ result }: { result: QueryResult | null }) {
   const { t } = useTranslation();
-  if (!result) return <span />;
+  const title = (
+    <h2 className="app-section-title" style={{ margin: 0 }}>
+      {t("query.resultTitle")}
+    </h2>
+  );
+  if (!result) return title;
   if (!result.success) {
     return (
-      <Space size={6}>
+      <Space size={10}>
+        {title}
         <CloseCircleFilled style={{ color: "var(--ant-color-error)" }} />
         <Typography.Text type="danger">{t("query.queryFailedSeeLog")}</Typography.Text>
       </Space>
     );
   }
   return (
-    <Space size={6}>
+    <Space size={10}>
+      {title}
       <CheckCircleFilled style={{ color: "var(--ant-color-success)" }} />
       <Typography.Text type="secondary">
         {t("query.rowsMeta", { rows: result.rows.length, ms: result.elapsedMs })}

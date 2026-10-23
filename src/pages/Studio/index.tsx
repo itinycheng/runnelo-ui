@@ -20,6 +20,20 @@ const tabTheme: ThemeConfig = {
   },
 };
 
+const closeButtonStyle: React.CSSProperties = {
+  display: "inline-flex",
+  alignItems: "center",
+  justifyContent: "center",
+  width: 24,
+  height: 24,
+  marginLeft: 4,
+  padding: 0,
+  color: "inherit",
+  background: "transparent",
+  border: 0,
+  cursor: "pointer",
+};
+
 function getTabIcon(jobType: string | undefined): React.ReactNode {
   return <TaskIcon type={jobType} size={16} style={{ marginRight: 4 }} />;
 }
@@ -53,13 +67,17 @@ export default function StudioPage() {
         >
           {tab.node.name}
         </span>
-        <CloseOutlined
-          style={{ color: "inherit" }}
+        <button
+          type="button"
+          aria-label={`${t("common.close")} ${tab.node.name}`}
+          style={closeButtonStyle}
           onClick={(e) => {
             e.stopPropagation();
             closeTab(tab.key);
           }}
-        />
+        >
+          <CloseOutlined aria-hidden />
+        </button>
       </span>
     ),
     children: <JobTabWrapper node={tab.node} />,

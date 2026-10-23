@@ -12,7 +12,7 @@ interface ExecutionStatusVisual {
 export const EXECUTION_STATUS_VISUALS: Record<ExecutionStatus, ExecutionStatusVisual> = {
   SUBMITTED: { tagColor: "cyan", color: "#13C2C2" },
   RUNNING: { tagColor: "blue", color: "#1677FF" },
-  SUCCESS: { tagColor: "green", color: "#52C41A" },
+  SUCCESS: { tagColor: "green", color: "var(--ant-color-success)" },
   FAILURE: { tagColor: "red", color: "#FF4D4F" },
   KILLED: { tagColor: "volcano", color: "#FA541C" },
   ABNORMAL: { tagColor: "purple", color: "#722ED1" },

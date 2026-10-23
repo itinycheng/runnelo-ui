@@ -19,7 +19,7 @@ export default function FlowSelect({ value, onChange }: Props) {
       value={value}
       onChange={onChange}
       placeholder={t("picker.selectFlow")}
-      options={data.map((flow) => ({ value: flow.id, label: `${flow.name} (#${flow.id})` }))}
+      options={data?.map((flow) => ({ value: flow.id, label: `${flow.name} (#${flow.id})` }))}
       optionFilterProp="label"
     />
   );

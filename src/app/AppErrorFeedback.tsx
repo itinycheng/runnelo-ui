@@ -193,13 +193,9 @@ export function AppErrorFeedbackHost() {
           {details.status != null && (
             <Descriptions.Item label={detailLabels.status}>{details.status}</Descriptions.Item>
           )}
-          {details.code != null && (
-            <Descriptions.Item label={detailLabels.code}>{details.code}</Descriptions.Item>
-          )}
+          {details.code != null && <Descriptions.Item label={detailLabels.code}>{details.code}</Descriptions.Item>}
           {details.method && (
-            <Descriptions.Item label={detailLabels.method}>
-              {details.method.toUpperCase()}
-            </Descriptions.Item>
+            <Descriptions.Item label={detailLabels.method}>{details.method.toUpperCase()}</Descriptions.Item>
           )}
           {detailsPath && (
             <Descriptions.Item label={detailLabels.path}>

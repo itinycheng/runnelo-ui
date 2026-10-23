@@ -3,6 +3,7 @@ import type { JobTreeNode } from "@/types/job";
 import type { JobInfo, JobFlow } from "@/types/entities";
 import type { IPage } from "@/types/common";
 import type { ExecutionStatus } from "@/constants/enums";
+import { USE_MOCK_DEFINITION_GROUPS } from "@/config";
 
 export const LEGACY_DEFINITIONS_ROOT_ID = "legacy:definitions";
 const LEGACY_DEFINITION_LIMIT = 1_000;
@@ -76,11 +77,13 @@ function root(children?: JobTreeNode[]): JobTreeNode {
 
 /** 获取顶层分组（不含子节点） */
 export function getJobGroups(): Promise<JobTreeNode[]> {
+  if (USE_MOCK_DEFINITION_GROUPS) return http.get<JobTreeNode[]>("/jobTree/roots");
   return Promise.resolve([root()]);
 }
 
 /** 获取指定分组下的直接成员（子分组 + 叶子节点） */
 export function getJobsByGroup(groupId: string): Promise<JobTreeNode[]> {
+  if (USE_MOCK_DEFINITION_GROUPS) return http.get<JobTreeNode[]>("/jobTree/children", { params: { groupId } });
   return groupId === LEGACY_DEFINITIONS_ROOT_ID ? listDefinitions() : Promise.resolve([]);
 }
 
@@ -90,6 +93,15 @@ export function searchJobs(params: {
   types?: string[];
   statuses?: string[];
 }): Promise<JobTreeNode[]> {
+  if (USE_MOCK_DEFINITION_GROUPS) {
+    return http.get<JobTreeNode[]>("/jobTree/search", {
+      params: {
+        keyword: params.keyword || undefined,
+        types: params.types?.length ? params.types.join(",") : undefined,
+        statuses: params.statuses?.length ? params.statuses.join(",") : undefined,
+      },
+    });
+  }
   return listDefinitions(params.keyword).then((nodes) => {
     const selectedTypes = new Set(params.types ?? []);
     const selectedStatuses = new Set(params.statuses ?? []);
@@ -107,20 +119,24 @@ export function searchJobs(params: {
 // ---- Group writes (create/rename/delete) ----
 
 export function createJobGroup(p: { name: string; pid?: string }): Promise<string> {
+  if (USE_MOCK_DEFINITION_GROUPS) return http.post<string>("/jobGroup/create", p);
   return Promise.reject(new Error(`The legacy backend does not support definition groups (${p.name}).`));
 }
 
 export function renameJobGroup(p: { id: string; name: string }): Promise<string> {
+  if (USE_MOCK_DEFINITION_GROUPS) return http.post<string>("/jobGroup/update", p);
   return Promise.reject(new Error(`The legacy backend does not support renaming definition groups (${p.id}).`));
 }
 
 export function deleteJobGroup(id: string): Promise<boolean> {
+  if (USE_MOCK_DEFINITION_GROUPS) return http.get<boolean>(`/jobGroup/delete/${id}`);
   return Promise.reject(new Error(`The legacy backend does not support deleting definition groups (${id}).`));
 }
 
 // ---- Definition lifecycle (Task & Workflow nodes) ----
 
 export function renameTreeNode(p: { id: string; name: string }): Promise<string> {
+  if (USE_MOCK_DEFINITION_GROUPS) return http.post<string>("/jobTree/rename", p);
   const id = definitionRef(p.id);
   if (p.id.startsWith("flow:")) {
     return http
@@ -133,6 +149,7 @@ export function renameTreeNode(p: { id: string; name: string }): Promise<string>
 }
 
 export function deleteTreeNode(id: string): Promise<boolean> {
+  if (USE_MOCK_DEFINITION_GROUPS) return http.get<boolean>(`/jobTree/delete/${id}`);
   const ref = definitionRef(id);
   if (id.startsWith("flow:")) {
     return http
@@ -143,6 +160,7 @@ export function deleteTreeNode(id: string): Promise<boolean> {
 }
 
 export function updateJobTags(id: string, tags: string[]): Promise<JobTreeNode> {
+  if (USE_MOCK_DEFINITION_GROUPS) return http.post<JobTreeNode>("/jobTree/tags", { id, tags });
   const ref = definitionRef(id);
   return http
     .get<JobFlow>(`/jobFlow/get/${ref}`)
@@ -156,8 +174,7 @@ export function getJobInfo(id: string | number): Promise<JobInfo> {
 }
 
 export function createJobInfo(data: JobInfo, groupId?: string): Promise<JobInfo> {
-  void groupId;
-  return http.post<JobInfo>("/jobInfo/create", data);
+  return http.post<JobInfo>("/jobInfo/create", USE_MOCK_DEFINITION_GROUPS ? { ...data, groupId } : data);
 }
 
 export function updateJobInfo(data: JobInfo): Promise<JobInfo> {

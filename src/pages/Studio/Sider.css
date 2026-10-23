@@ -1,14 +1,69 @@
 /* Overlay the resize hit-area on the panel divider without widening the gutter. */
 .sider-resizer {
   flex-shrink: 0;
-  width: 5px;
-  margin-left: -5px;
+  position: relative;
+  z-index: 2;
+  width: 12px;
+  margin-left: -12px;
   cursor: col-resize;
+  background: transparent;
+}
+
+.sider-resizer::after {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 5px;
+  width: 2px;
+  content: "";
   background: transparent;
   transition: background 0.15s;
 }
 
-.sider-resizer:hover,
-.sider-resizer:active {
+.sider-resizer:hover::after,
+.sider-resizer:active::after,
+.sider-resizer:focus-visible::after {
   background: var(--ant-color-primary);
+}
+
+.studio-sider {
+  --studio-rail-width: 45px;
+
+  position: relative;
+  overflow: hidden;
+}
+
+.studio-sider button:focus-visible,
+.sider-resizer:focus-visible {
+  outline: 2px solid var(--ant-color-primary);
+  outline-offset: -2px;
+}
+
+@media (max-width: 767px) {
+  .studio-sider {
+    overflow: visible;
+  }
+
+  .studio-sider-panel {
+    position: absolute;
+    top: 0;
+    bottom: 0;
+    left: var(--studio-rail-width);
+    z-index: 20;
+    max-width: calc(100vw - var(--studio-rail-width));
+    background: var(--ant-color-bg-container);
+    box-shadow: 3px 0 12px color-mix(in srgb, var(--ant-color-text) 15%, transparent);
+  }
+
+  .sider-resizer {
+    display: none;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .studio-sider button,
+  .sider-resizer,
+  .sider-resizer::after {
+    transition: none !important;
+  }
 }

@@ -38,9 +38,10 @@ export function useFlowPersistence({
   t,
 }: UseFlowPersistenceOpts) {
   const saveFlowGraph = useJobStore((s) => s.saveFlowGraph);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(Boolean(workflowId));
 
   useEffect(() => {
+    if (!workflowId) return;
     let alive = true;
     void getFlowGraph(workflowId)
       .then((graph) => {
@@ -58,6 +59,7 @@ export function useFlowPersistence({
   }, [workflowId, setNodes, setEdges]);
 
   const handleSave = useCallback(async () => {
+    if (!workflowId) return;
     try {
       await saveFlowGraph(workflowId, serializeFlow(nodes, edges));
       void messageApi.success(t("dag.flowSaved"));

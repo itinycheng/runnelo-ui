@@ -23,6 +23,28 @@ describe("jobStore jobInfo actions", () => {
     expect(info?.name).toBe("x");
   });
 
+  it("keeps task parameters on JobInfo with the real backend adapter", async () => {
+    const task = {
+      id: 19,
+      name: "Task",
+      type: "SHELL" as const,
+      execMode: "BATCH" as const,
+      routeUrl: [1],
+      params: { region: "west" },
+      config: { type: "SHELL" as const, retryTimes: 0, retryInterval: "5s", timeout: "60s" },
+    };
+    vi.mocked(jobApi.getJobInfo).mockResolvedValue(task);
+    vi.mocked(jobApi.updateJobInfo).mockResolvedValue({ ...task, params: { region: "east" } });
+    useJobStore.setState({ treeData: [{ id: "job:19", refId: 19, name: "Task", kind: "task", pid: "g-1" }] });
+
+    const settings = await useJobStore.getState().loadJobFlow("job:19");
+    expect(settings?.params).toEqual({ region: "west" });
+    await useJobStore.getState().saveJobFlow("job:19", { ...settings!, params: { region: "east" } });
+
+    expect(jobApi.updateJobInfo).toHaveBeenCalledWith({ ...task, params: { region: "east" } });
+    expect(jobFlowApi.updateJobFlow).not.toHaveBeenCalled();
+  });
+
   it("saveJobInfo creates when no id, updates when id present, and sets refId on the node", async () => {
     vi.mocked(jobApi.createJobInfo).mockResolvedValue({ id: 9, name: "n" } as never);
     vi.mocked(jobApi.updateJobInfo).mockResolvedValue({ id: 9, name: "n" } as never);
@@ -80,12 +102,15 @@ describe("jobStore group/leaf backend wiring", () => {
 
     await useJobStore.getState().createWorkflow("daily-etl", "legacy:definitions");
 
-    expect(jobFlowApi.createJobFlow).toHaveBeenCalledWith({
-      name: "daily-etl",
-      type: "JOB_FLOW",
-      config: { parallelism: 1 },
-      timeout: { enable: false },
-    });
+    expect(jobFlowApi.createJobFlow).toHaveBeenCalledWith(
+      {
+        name: "daily-etl",
+        type: "JOB_FLOW",
+        config: { parallelism: 1 },
+        timeout: { enable: false },
+      },
+      "legacy:definitions",
+    );
     const node = useJobStore.getState().selectedNode;
     expect(node).toMatchObject({ id: "flow:17", refId: 17, name: "daily-etl", kind: "workflow" });
     expect(useJobStore.getState().activeTabKey).toBe("flow:17");

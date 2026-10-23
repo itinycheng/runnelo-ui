@@ -30,6 +30,25 @@ import type { FlowGraph } from "@/types/flow";
 import { queryClient } from "@/app/queryClient";
 import { queryKeys } from "@/api/queryKeys";
 import { STORAGE_KEYS } from "@/constants/storage";
+import { USE_MOCK_DEFINITION_GROUPS } from "@/config";
+
+type MockTaskSettings = Pick<JobFlow, "cronExpr" | "config" | "priority" | "timeout" | "alerts">;
+type MockTaskJobInfo = JobInfo & { mockDefinitionSettings?: MockTaskSettings };
+
+function taskSettingsAsFlow(job: MockTaskJobInfo): JobFlow {
+  const settings = job.mockDefinitionSettings;
+  return {
+    id: job.id,
+    name: job.name,
+    type: "JOB_FLOW",
+    cronExpr: settings?.cronExpr,
+    config: settings?.config ?? { parallelism: 1 },
+    priority: settings?.priority,
+    timeout: settings?.timeout ?? { enable: false },
+    alerts: settings?.alerts ?? [],
+    params: job.params,
+  };
+}
 
 export interface OpenTab {
   key: string;
@@ -79,6 +98,15 @@ export { findNodeById } from "@/utils/tree";
 function persistedNodeId(node: JobTreeNode): string {
   if (node.refId == null) return node.id;
   return `${node.kind === "workflow" ? "flow" : "job"}:${node.refId}`;
+}
+
+function removeTreeNodeWithCount(tree: JobTreeNode[], nodeId: string, target: JobTreeNode | null): JobTreeNode[] {
+  const withoutNode = removeNodeById(tree, nodeId);
+  if (!target?.pid) return withoutNode;
+  return updateNodeById(withoutNode, target.pid, (parent) => ({
+    ...parent,
+    childCount: parent.childCount == null ? undefined : Math.max(0, parent.childCount - 1),
+  }));
 }
 
 function activeWorkspaceId(): number | null {
@@ -238,7 +266,7 @@ export const useJobStore = create<WorkflowState>((set, get) => ({
   removeNode: (nodeId) => {
     const { treeData, selectedNode, openTabs, activeTabKey } = get();
     const target = findNodeById(treeData, nodeId);
-    const newTree = removeNodeById(treeData, nodeId);
+    const newTree = removeTreeNodeWithCount(treeData, nodeId, target);
     // Removing a node drops its whole subtree, so tabs/selection for any
     // descendant must be cleaned up too.
     const removedIds = new Set<string>(target ? collectSubtreeIds(target) : [nodeId]);
@@ -262,12 +290,15 @@ export const useJobStore = create<WorkflowState>((set, get) => ({
   },
 
   createWorkflow: async (name, pid) => {
-    const id = await createJobFlow({
-      name,
-      type: "JOB_FLOW",
-      config: { parallelism: 1 },
-      timeout: { enable: false },
-    });
+    const id = await createJobFlow(
+      {
+        name,
+        type: "JOB_FLOW",
+        config: { parallelism: 1 },
+        timeout: { enable: false },
+      },
+      pid,
+    );
     await Promise.all([
       invalidateDefinitions(),
       queryClient.invalidateQueries({ queryKey: queryKeys.options(activeWorkspaceId(), "flows", []) }),
@@ -385,6 +416,9 @@ export const useJobStore = create<WorkflowState>((set, get) => ({
     if (node && node.refId == null) return null;
     try {
       const id = String(node?.refId ?? nodeId);
+      if (node?.kind === "task") {
+        return taskSettingsAsFlow(await getJobInfo(id));
+      }
       return await queryClient.fetchQuery({
         queryKey: queryKeys.definitions.flow(activeWorkspaceId(), id),
         queryFn: () => getJobFlow(id),
@@ -396,6 +430,28 @@ export const useJobStore = create<WorkflowState>((set, get) => ({
 
   saveJobFlow: async (nodeId, flow) => {
     const node = findNodeById(get().treeData, nodeId);
+    if (node?.kind === "task") {
+      if (node.refId == null) throw new Error("Save the task before editing its settings.");
+      const job = (await getJobInfo(node.refId)) as MockTaskJobInfo;
+      const updated: MockTaskJobInfo = {
+        ...job,
+        params: flow.params,
+        ...(USE_MOCK_DEFINITION_GROUPS
+          ? {
+              mockDefinitionSettings: {
+                cronExpr: flow.cronExpr,
+                config: flow.config,
+                priority: flow.priority,
+                timeout: flow.timeout,
+                alerts: flow.alerts,
+              },
+            }
+          : {}),
+      };
+      await updateJobInfo(updated);
+      await invalidateDefinitions();
+      return;
+    }
     let id = flow.id;
     if (flow.id) {
       await updateJobFlow(flow);

@@ -1,6 +1,6 @@
-import { useEffect } from "react";
-import { Outlet, useNavigate, useLocation } from "react-router-dom";
-import { ConfigProvider, Space, Typography, type ThemeConfig } from "antd";
+import { useEffect, type ReactNode } from "react";
+import { Link, Outlet, useLocation } from "react-router-dom";
+import { Button, ConfigProvider, Space, Typography, type ThemeConfig } from "antd";
 import { ProLayout, type ProLayoutProps } from "@ant-design/pro-components";
 import { useTranslation } from "react-i18next";
 import {
@@ -20,6 +20,7 @@ import {
   AppstoreOutlined,
   AuditOutlined,
   SlidersOutlined,
+  MenuOutlined,
 } from "@ant-design/icons";
 import UserAvatar from "@/components/UserAvatar";
 import LangSwitcher from "@/components/LangSwitcher";
@@ -87,12 +88,7 @@ function buildLayoutRoutes(t: TFunc): ProLayoutProps["route"] {
     path: "/",
     routes: [
       { path: "/dashboard", name: t("menu.dashboard"), icon: <DashboardOutlined /> },
-      {
-        path: "/studio",
-        name: t("menu.studio"),
-        icon: <PartitionOutlined />,
-        routes: [{ path: "/studio/list", name: "_jobs", icon: <PartitionOutlined /> }],
-      },
+      { path: "/studio", name: t("menu.studio"), icon: <PartitionOutlined /> },
       { path: "/query", name: t("menu.query"), icon: <ConsoleSqlOutlined /> },
       { path: "/runs", name: t("menu.runs"), icon: <HistoryOutlined /> },
       {
@@ -117,6 +113,13 @@ function buildLayoutRoutes(t: TFunc): ProLayoutProps["route"] {
   };
 }
 
+function currentTopLevelMenuName(route: ProLayoutProps["route"], pathname: string): string | undefined {
+  const item = route?.routes?.find(
+    (candidate) => candidate.path && (pathname === candidate.path || pathname.startsWith(`${candidate.path}/`)),
+  );
+  return typeof item?.name === "string" ? item.name : undefined;
+}
+
 function renderHeaderTitle(themePreset: ThemePresetKey) {
   return (
     <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
@@ -130,8 +133,60 @@ function renderHeaderTitle(themePreset: ThemePresetKey) {
   );
 }
 
+function MobileNavigationButton({
+  collapsed,
+  onCollapse,
+  currentPageName,
+  t,
+}: {
+  collapsed: boolean;
+  onCollapse?: (next: boolean) => void;
+  currentPageName?: string;
+  t: TFunc;
+}) {
+  const actionLabel = t(collapsed ? "nav.openNavigation" : "nav.closeNavigation");
+  return (
+    <Button
+      type="text"
+      size="small"
+      icon={<MenuOutlined aria-hidden />}
+      aria-label={currentPageName ? `${actionLabel}: ${currentPageName}` : actionLabel}
+      aria-expanded={!collapsed}
+      onClick={() => onCollapse?.(!collapsed)}
+    >
+      {currentPageName}
+    </Button>
+  );
+}
+
+function responsiveHeaderContent(
+  props: { isMobile?: boolean; collapsed?: boolean; onCollapse?: (next: boolean) => void },
+  defaultDom: ReactNode,
+  t: TFunc,
+  currentPageName?: string,
+): ReactNode {
+  return props.isMobile ? (
+    <MobileNavigationButton
+      collapsed={!!props.collapsed}
+      onCollapse={props.onCollapse}
+      currentPageName={currentPageName}
+      t={t}
+    />
+  ) : (
+    <div style={{ width: "100%", minWidth: 0, overflowX: "auto", overflowY: "hidden" }}>{defaultDom}</div>
+  );
+}
+
+function DashboardFooter() {
+  const { t } = useTranslation();
+  return (
+    <Typography.Text type="secondary" style={{ textAlign: "center" }}>
+      {t("app.footer", { year: new Date().getFullYear(), version: APP.version, appName: APP.name })}
+    </Typography.Text>
+  );
+}
+
 export default function MainLayout() {
-  const navigate = useNavigate();
   const location = useLocation();
   const { t, i18n } = useTranslation();
   const isStudioPage = location.pathname.startsWith("/studio");
@@ -166,33 +221,37 @@ export default function MainLayout() {
   const filteredRoutes: ProLayoutProps["route"] = layoutRoutes
     ? { ...layoutRoutes, routes: filterMenuByPermission(layoutRoutes.routes, effectivePermissions) }
     : layoutRoutes;
+  const currentPageName = currentTopLevelMenuName(filteredRoutes, location.pathname);
 
   return (
     <div id="pro-layout-wrapper" style={{ height: "100vh" }}>
       <ProLayout
         key={i18n.language}
         title={title}
+        logo={false}
         headerTitleRender={() => renderHeaderTitle(themePreset)}
+        headerContentRender={(props, defaultDom) => responsiveHeaderContent(props, defaultDom, t, currentPageName)}
         layout="mix"
         splitMenus
         fixedHeader
         token={appLayoutTokens[themePreset]}
         location={{ pathname: location.pathname }}
         route={filteredRoutes}
-        menuItemRender={(item, dom) => (
-          <a onClick={() => item.path && item.name !== "_jobs" && navigate(item.path)}>{dom}</a>
-        )}
-        actionsRender={() => [<HeaderActions key="header-actions" />]}
-        footerRender={
-          isDashboard
-            ? () => (
-                <Typography.Text type="secondary" style={{ textAlign: "center" }}>
-                  {t("app.footer", { year: new Date().getFullYear(), version: APP.version, appName: APP.name })}
-                </Typography.Text>
-              )
-            : false
+        menuItemRender={(item, dom) =>
+          item.path ? (
+            <Link
+              to={item.path}
+              onClick={item.onClick}
+              onFocus={(event) => event.currentTarget.scrollIntoView?.({ block: "nearest", inline: "nearest" })}
+            >
+              {dom}
+            </Link>
+          ) : (
+            dom
+          )
         }
-        menuRender={isStudioPage ? false : undefined}
+        actionsRender={() => [<HeaderActions key="header-actions" />]}
+        footerRender={isDashboard ? () => <DashboardFooter /> : false}
         contentStyle={{
           display: "flex",
           flexDirection: "column" as const,
