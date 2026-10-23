@@ -2,9 +2,9 @@
  * Central runtime configuration.
  *
  * Per-environment values come from Vite env files (.env, .env.[mode], .env.local)
- * and are read through `import.meta.env` here — so there is one place to see
- * everything the app can be configured with, and consumers import typed values
- * instead of reaching into `import.meta.env` (or hardcoding literals) directly.
+ * and are read through `import.meta.env` here for application code. Consumers
+ * import typed values instead of reaching into `import.meta.env` directly.
+ * The mock environment marker reads its preview-only values in its handler.
  */
 
 /** Application metadata, injected at build time from package.json. */
@@ -32,5 +32,5 @@ export const API_MODE = import.meta.env.VITE_API_MODE || "mock";
 /** Whether to start MSW request mocking (development only). Active only in "mock" mode. */
 export const ENABLE_MOCK = API_MODE === "mock";
 
-/** The development mock exposes definition folders; the legacy backend does not. */
+/** Definition groups are enabled for the current development mock. */
 export const USE_MOCK_DEFINITION_GROUPS = import.meta.env.DEV && ENABLE_MOCK;

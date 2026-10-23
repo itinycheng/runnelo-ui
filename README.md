@@ -1,84 +1,77 @@
 # Runnelo UI
 
-Runnelo scheduling platform frontend built with React 19 + TypeScript + Vite.
+**A workspace-aware console for defining, running, and inspecting data jobs.**
 
-## Tech Stack
+Runnelo UI combines workflow editing, run inspection, SQL queries, and
+administration. Development uses browser mocks until the new backend contract
+is available.
 
-- React 19 + TypeScript
-- Vite 8
-- Ant Design 6 + ProComponents
-- TanStack Query (server state) + Zustand (client state)
-- React Router 7
-- i18next (i18n, English / Chinese)
-- XYFlow (DAG editor)
-- MSW (dev mock)
-- Vitest + Testing Library (testing)
+## What it covers
 
-## Modules
+- **Studio:** manage workflows and SQL, Shell, Spark, and Flink tasks; edit
+  workflow graphs in the DAG editor.
+- **Runs:** inspect workflow execution history, details, status, and logs.
+- **Query:** write and run SQL, then inspect and export results.
+- **Dashboard:** view an operational overview of jobs and runs.
+- **Administration:** manage resources, users, workspaces, data sources,
+  configuration, and alert rules; inspect audit logs.
 
-- **Dashboard** — overview and metrics
-- **Studio** — workflow and task management with SQL / Shell / Spark / Flink task types and a built-in DAG editor
-- **Admin** — resources, users, environment configs, custom parameters and alert rules
-- **Runs** — workflow execution history, details and logs
+The UI supports English and Chinese. Mock responses demonstrate the screens;
+they do not define the future backend API.
 
-## Getting Started
+## Quick start
+
+Use Node.js **22.12 or later** and npm:
 
 ```bash
-# Install dependencies
-npm install
-
-# Start dev server (with MSW mock)
+npm ci
 npm run dev
-
-# Build for production
-npm run build
-
-# Preview production build
-npm run preview
 ```
 
-## Scripts
+Open the URL printed by Vite. With the repository defaults, development starts
+in **mock mode**; MSW serves the UI without a backend.
 
-| Command              | Description                   |
-| -------------------- | ----------------------------- |
-| `npm run dev`        | Start dev server              |
-| `npm run build`      | Type check + production build |
-| `npm run lint`       | ESLint check                  |
-| `npm run format`     | Prettier format               |
-| `npm run test`       | Run tests                     |
-| `npm run test:watch` | Run tests in watch mode       |
-| `npm run test:backend` | Check a running backend without writes |
-| `npm run test:backend:mutation` | Create, verify, and clean up backend test data |
+See [.env.example](.env.example) for local mock settings. Put overrides in
+`.env.local`, which Git ignores.
 
-## Project Structure
+## How it fits together
 
-```
-src/
-├── api/          # API requests
-├── assets/       # Static assets
-├── components/   # Shared components
-├── layouts/      # Layout components
-├── locales/      # i18n files
-├── mocks/        # MSW mock handlers
-├── pages/        # Page modules
-├── router/       # Route config
-├── stores/       # Zustand stores
-├── types/        # TypeScript type definitions
-└── utils/        # Utility functions
-```
+The React app uses Ant Design, hash routing, TanStack Query for server state,
+and Zustand for client state. `src/api/` exposes UI operations; `src/mocks/`
+provides development responses. Some API code still reflects an older backend
+and will be replaced when the new contract is known.
 
-The current backend compatibility contract is documented in
-[`docs/backend-compatibility.md`](docs/backend-compatibility.md).
+For styling rules, read the [UI system](docs/architecture/ui-system.md).
 
-## Environment identity
+### Future backend integration
 
-The UI reads optional display settings from the backend's public
-`GET /ui/environment` endpoint when it starts. Each deployment can supply any
-environment label and independently enable a header marker or a watermark.
-When neither is configured, no environment marker is shown. The backend's
-`runnelo.ui.environment` properties control these settings at runtime, so a
-frontend rebuild is not needed for each environment.
+`VITE_API_BASE_URL` sets the request base URL; it does not change endpoint
+paths, headers, payloads, or response parsing. If the new backend differs,
+update `src/api/`, `src/utils/request.ts`, and the mocks.
+Staging and production request settings remain provisional until integration.
 
-For a local visual preview in mock mode, copy the `VITE_MOCK_ENV_*` example
-values from `.env.example` into `.env.local`, set a label, and enable `HEADER`,
-`WATERMARK`, or both. Restart `npm run dev` after changing `.env.local`.
+## Development checks
+
+| Command                | Purpose                                          |
+| ---------------------- | ------------------------------------------------ |
+| `npm run lint`         | Check source with ESLint.                        |
+| `npm test`             | Run the Vitest suite once.                       |
+| `npm run build`        | Type-check and create the production build.      |
+| `npm run format:check` | Check source formatting without rewriting files. |
+
+GitHub CI runs `npm ci`, lint, tests, and the production build on pull requests
+and pushes to `main` or `master`. Run `npm run format:check` locally as part of
+the agent workflow; it is not in CI.
+
+## Deployment environment identity
+
+In mock mode, `VITE_MOCK_ENV_*` settings preview an environment label, header
+marker, or watermark. The UI's `GET /ui/environment` request must be checked
+against the new backend contract before use outside mock mode.
+
+## Project documentation
+
+- [AGENTS.md](AGENTS.md) — agent workflow and document placement.
+- [Code standards](docs/code-standards.md) — implementation and review rules.
+- [LESSONS.md](LESSONS.md) — lessons from review and rework.
+- [UI system](docs/architecture/ui-system.md) — visual direction and theme sources.
